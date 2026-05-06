@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext, useMemo } from "react";
+import React, { useEffect, useState, useContext, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "./CartContext";
 import { ChevronDown, ChevronUp } from "lucide-react";
@@ -18,7 +18,6 @@ type ProductoDetalle = {
   promocion: any | null;
   link: string;
 };
-
 
 const getEstadoPromocion = (item: any, producto: any) => {
   if (!producto?.promocion) return null;
@@ -71,8 +70,6 @@ const getEstadoPromocion = (item: any, producto: any) => {
   return null;
 };
 
-
-
 /* ================= COMPONENTE ================= */
 
 const Comprar: React.FC = () => {
@@ -84,8 +81,8 @@ const Comprar: React.FC = () => {
   } = useCart();
 
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
 
+  const [loading, setLoading] = useState(true);
   const [disponibilidad, setDisponibilidad] = useState<any[]>([]);
   const [expandido, setExpandido] = useState<Record<string, boolean>>({});
   const [usuarioSelecciono, setUsuarioSelecciono] = useState(false);
@@ -93,41 +90,97 @@ const Comprar: React.FC = () => {
 
   const { coords } = useContext(AddressContext);
 
-  /* ================= FETCH DISPONIBILIDAD (IGUAL QUE DETALLE) ================= */
+  // Evita que respuestas viejas pisen el resultado si el carrito cambia mientras se está calculando.
+  const requestIdRef = useRef(0);
 
- useEffect(() => {
-  const fetchDisponibilidad = async () => {
-    try {
-      setLoading(true);
+  // Clave del carrito actual: cambia si cambia el producto o la cantidad.
+  const carritoKey = useMemo(() => {
+    return items
+      .map((item) => `${item.nombre}-${item.cantidad}`)
+      .join("|");
+  }, [items]);
 
-      const resultados = await Promise.all(
-        items.map(async (item) => {
-          const res = await fetch(`${API_URL}/api/productos/detalle/${encodeURIComponent(item.nombre)}`);
-          const data = await res.json();
+  /* ================= FETCH DISPONIBILIDAD ================= */
 
-          return {
-            nombre: item.nombre,
-            cantidad: item.cantidad,
-            opciones: data,
-          };
-        })
-      );
+  useEffect(() => {
+    const fetchDisponibilidad = async () => {
+      const requestId = ++requestIdRef.current;
 
-      setDisponibilidad(resultados);
-    } catch (error) {
-      console.error("Error cargando disponibilidad", error);
-    } finally {
-      setLoading(false); 
-    }
-  };
+      if (items.length === 0) {
+        setDisponibilidad([]);
+        setLoading(false);
+        return;
+      }
 
-  if (items.length > 0) {
+      try {
+        setLoading(true);
+
+        const resultados = await Promise.all(
+          items.map(async (item) => {
+            try {
+              const res = await fetch(
+                `${API_URL}/api/productos/detalle/${encodeURIComponent(
+                  item.nombre
+                )}`
+              );
+
+              if (!res.ok) {
+                throw new Error(`Error HTTP ${res.status}`);
+              }
+
+              const data = await res.json();
+
+              return {
+                nombre: item.nombre,
+                cantidad: item.cantidad,
+                opciones: Array.isArray(data) ? data : [],
+              };
+            } catch (error) {
+              console.error("Error cargando disponibilidad de:", item.nombre, error);
+
+              return {
+                nombre: item.nombre,
+                cantidad: item.cantidad,
+                opciones: [],
+              };
+            }
+          })
+        );
+
+        // Solo se actualiza si esta sigue siendo la última búsqueda activa.
+        if (requestIdRef.current === requestId) {
+          setDisponibilidad(resultados);
+        }
+      } catch (error) {
+        console.error("Error cargando disponibilidad", error);
+
+        if (requestIdRef.current === requestId) {
+          setDisponibilidad([]);
+        }
+      } finally {
+        if (requestIdRef.current === requestId) {
+          setLoading(false);
+        }
+      }
+    };
+
     fetchDisponibilidad();
-  } else {
-    setDisponibilidad([]);
-    setLoading(false); // si carrito vacío
-  }
-}, [items]);
+  }, [carritoKey]);
+
+  /* ================= VALIDAR SI LA DISPONIBILIDAD YA CORRESPONDE AL CARRITO ACTUAL ================= */
+
+  const disponibilidadCompleta = useMemo(() => {
+    if (items.length === 0) return true;
+    if (disponibilidad.length !== items.length) return false;
+
+    return items.every((item) =>
+      disponibilidad.some(
+        (d) => d.nombre === item.nombre && d.cantidad === item.cantidad
+      )
+    );
+  }, [items, disponibilidad]);
+
+  const procesando = loading || !disponibilidadCompleta;
 
   /* ================= FETCH DISTANCIAS ================= */
 
@@ -136,7 +189,9 @@ const Comprar: React.FC = () => {
 
     const fetchDistancias = async () => {
       try {
-        const res = await fetch(`${API_URL}/api/supermercados/distancias?lat=${coords.lat}&lon=${coords.lon}`);
+        const res = await fetch(
+          `${API_URL}/api/supermercados/distancias?lat=${coords.lat}&lon=${coords.lon}`
+        );
 
         const data = await res.json();
         setDistancias(data);
@@ -150,71 +205,65 @@ const Comprar: React.FC = () => {
 
   /* ================= ARMAR SUPERMERCADOS ================= */
 
- const supermercados = useMemo(() => {
-  // LISTA FIJA
-  const nombres = ["Super Vea", "Super Jumbo", "Super Dia"];
+  const supermercados = useMemo(() => {
+    const nombres = ["Super Vea", "Super Jumbo", "Super Dia"];
 
-  const acc: Record<string, any[]> = {};
+    const acc: Record<string, any[]> = {};
 
-  // 🔥 Inicializar TODOS
-  nombres.forEach((nombre) => {
-    acc[nombre] = [];
-  });
+    nombres.forEach((nombre) => {
+      acc[nombre] = [];
+    });
 
-  //  Llenar con los que existan
-  disponibilidad.forEach((item) => {
-    item.opciones.forEach((op: ProductoDetalle) => {
-      if (!acc[op.supermercado]) return;
+    disponibilidad.forEach((item) => {
+      item.opciones.forEach((op: ProductoDetalle) => {
+        if (!acc[op.supermercado]) return;
 
-      acc[op.supermercado].push({
-        ...op,
-        cantidad: item.cantidad,
-        nombre: item.nombre,
+        acc[op.supermercado].push({
+          ...op,
+          cantidad: item.cantidad,
+          nombre: item.nombre,
+        });
       });
     });
-  });
 
-  return acc;
-}, [disponibilidad]);
+    return acc;
+  }, [disponibilidad]);
 
   /* ================= COMPARACIONES ================= */
 
   const comparaciones = useMemo(() => {
-    return Object.entries(supermercados).map(
-      ([supermercado, productos]) => {
-        let total = 0;
+    return Object.entries(supermercados).map(([supermercado, productos]) => {
+      let total = 0;
 
-        for (const item of items) {
-          const encontrado = productos.find(
-            (p) => p.nombre === item.nombre
+      for (const item of items) {
+        const encontrado = productos.find((p) => p.nombre === item.nombre);
+
+        if (encontrado) {
+          total += calcularTotalConPromocion(
+            encontrado.precio_base,
+            encontrado.promocion,
+            item.cantidad
           );
-
-          if (encontrado) {
-            total += calcularTotalConPromocion(
-              encontrado.precio_base,
-              encontrado.promocion,
-              item.cantidad
-            );
-          }
         }
-
-        const faltantes = items.filter(
-          (item) => !productos.some((p) => p.nombre === item.nombre)
-        ).length;
-
-        return {
-          supermercado,
-          productos,
-          total,
-          faltantes,
-        };
       }
-    );
+
+      const faltantes = items.filter(
+        (item) => !productos.some((p) => p.nombre === item.nombre)
+      ).length;
+
+      return {
+        supermercado,
+        productos,
+        total,
+        faltantes,
+      };
+    });
   }, [supermercados, items]);
 
   /* ================= AUTO SELECCIÓN ================= */
 
   useEffect(() => {
+    if (procesando) return;
     if (usuarioSelecciono) return;
 
     const completos = comparaciones.filter((s) => s.faltantes === 0);
@@ -230,9 +279,17 @@ const Comprar: React.FC = () => {
       setSupermercadoSeleccionado("");
       setTotalSeleccionado(0);
     }
-  }, [comparaciones]);
+  }, [
+    procesando,
+    usuarioSelecciono,
+    comparaciones,
+    setSupermercadoSeleccionado,
+    setTotalSeleccionado,
+  ]);
 
   useEffect(() => {
+    if (procesando) return;
+
     const seleccionado = comparaciones.find(
       (s) => s.supermercado === supermercadoSeleccionado
     );
@@ -240,7 +297,12 @@ const Comprar: React.FC = () => {
     if (seleccionado) {
       setTotalSeleccionado(seleccionado.total);
     }
-  }, [supermercadoSeleccionado, comparaciones]);
+  }, [
+    procesando,
+    supermercadoSeleccionado,
+    comparaciones,
+    setTotalSeleccionado,
+  ]);
 
   /* ================= HELPERS ================= */
 
@@ -252,30 +314,28 @@ const Comprar: React.FC = () => {
   };
 
   const seleccionarSupermercado = (supermercado: string, total: number) => {
+    if (procesando) return;
+
     setSupermercadoSeleccionado(supermercado);
     setUsuarioSelecciono(true);
     setTotalSeleccionado(total);
   };
 
+  if (procesando) {
+    return (
+      <div className="space-y-4 p-4 pb-32">
+        <div className="text-center text-gray-500 mb-2">
+          Calculando disponibilidad y precios...
+        </div>
 
-if (loading) {
-  return (
-    <div className="space-y-4 p-4 pb-32">
-      
-      <div className="text-center text-gray-500 mb-2">
-        Cargando precios...
+        <div className="animate-pulse space-y-4">
+          <div className="h-28 bg-gray-200 rounded-3xl"></div>
+          <div className="h-28 bg-gray-200 rounded-3xl"></div>
+          <div className="h-28 bg-gray-200 rounded-3xl"></div>
+        </div>
       </div>
-
-      {/* Skeleton cards */}
-      <div className="animate-pulse space-y-4">
-        <div className="h-20 bg-gray-200 rounded-2xl"></div>
-        <div className="h-20 bg-gray-200 rounded-2xl"></div>
-        <div className="h-20 bg-gray-200 rounded-2xl"></div>
-      </div>
-
-    </div>
-  );
-}
+    );
+  }
 
   /* ================= RENDER ================= */
 
@@ -328,7 +388,6 @@ if (loading) {
                         key={item.nombre}
                         className="grid grid-cols-[1fr_100px] grid-rows-[auto_auto] gap-x-2 gap-y-1"
                       >
-                        {/* NOMBRE */}
                         <div
                           className={`text-sm ${
                             !encontrado ? "text-red-600" : ""
@@ -337,14 +396,12 @@ if (loading) {
                           {item.cantidad} x {item.nombre}
                         </div>
 
-                        {/* PRECIO */}
                         <div className="text-right text-sm">
                           {!encontrado
                             ? "-"
                             : `$${totalProducto.toLocaleString()}`}
                         </div>
 
-                        {/* PROMO STATUS */}
                         <div className="col-span-2 text-xs min-h-[16px]">
                           {estadoPromo && (
                             <span
@@ -373,7 +430,8 @@ if (loading) {
 
             <button
               onClick={() => seleccionarSupermercado(supermercado, total)}
-              className="w-full py-2 bg-gray-100"
+              disabled={procesando}
+              className="w-full py-2 bg-gray-100 disabled:opacity-50"
             >
               Seleccionar este supermercado
             </button>
