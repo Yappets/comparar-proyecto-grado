@@ -10,7 +10,6 @@ import geolocalizacionRoutes from "./routes/geolocalizacion.routes";
 import userRoutes from "./routes/user.routes";
 import supermercadoRoutes from "./routes/supermercado.routes";
 
-// Carga variables de entorno como PORT, MONGO_URI, FRONT_URL y credenciales de correo.
 dotenv.config();
 
 const app = express();
@@ -18,11 +17,35 @@ const app = express();
 // Inicializa una única conexión a MongoDB antes de registrar las rutas.
 connectDB();
 
-// Middlewares globales de la API.
-app.use(cors({
-  origin: "*",
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-}));
+/* ======================================================
+   CORS
+====================================================== */
+
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173",
+      "https://comparar-proyecto-grado.vercel.app",
+    ],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: false,
+  })
+);
+
+// Preflight para evitar bloqueos en producción.
+app.options(
+  /.*/,
+  cors({
+    origin: [
+      "http://localhost:5173",
+      "https://comparar-proyecto-grado.vercel.app",
+    ],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: false,
+  })
+);
 
 app.use(express.json());
 
