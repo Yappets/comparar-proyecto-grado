@@ -3,7 +3,6 @@ import React, { useState, FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { API_URL } from "../../../config/api";
 
-
 const SignUpMobile: React.FC = () => {
   const navigate = useNavigate();
 
@@ -12,9 +11,13 @@ const SignUpMobile: React.FC = () => {
   const [confirm, setConfirm] = useState("");
   const [accepted, setAccepted] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [loadingRegistro, setLoadingRegistro] = useState(false);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+
+    if (loadingRegistro) return;
+
     setError(null);
 
     if (password !== confirm) {
@@ -28,6 +31,8 @@ const SignUpMobile: React.FC = () => {
     }
 
     try {
+      setLoadingRegistro(true);
+
       const res = await fetch(`${API_URL}/api/auth/signup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -42,10 +47,13 @@ const SignUpMobile: React.FC = () => {
       }
 
       localStorage.setItem("token", body.token);
-      navigate("/");
+      localStorage.setItem("userEmail", email);
 
+      navigate("/");
     } catch {
       setError("No se pudo conectar con el servidor");
+    } finally {
+      setLoadingRegistro(false);
     }
   };
 
@@ -56,7 +64,8 @@ const SignUpMobile: React.FC = () => {
       <div className="bg-gradient-to-b from-[#F72545] to-[#FF416C] rounded-b-[40px] p-4 relative">
         <button
           onClick={() => navigate(-1)}
-          className="text-white text-2xl absolute top-4 left-4"
+          disabled={loadingRegistro}
+          className="text-white text-2xl absolute top-4 left-4 disabled:opacity-60"
         >
           ←
         </button>
@@ -77,25 +86,31 @@ const SignUpMobile: React.FC = () => {
         <input
           type="email"
           placeholder="Email"
-          className="w-full p-3 border rounded-2xl"
+          className="w-full p-3 border rounded-2xl disabled:bg-gray-100"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          disabled={loadingRegistro}
+          required
         />
 
         <input
           type="password"
           placeholder="Password"
-          className="w-full p-3 border rounded-2xl"
+          className="w-full p-3 border rounded-2xl disabled:bg-gray-100"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+          disabled={loadingRegistro}
+          required
         />
 
         <input
           type="password"
           placeholder="Confirmar Password"
-          className="w-full p-3 border rounded-2xl"
+          className="w-full p-3 border rounded-2xl disabled:bg-gray-100"
           value={confirm}
           onChange={(e) => setConfirm(e.target.value)}
+          disabled={loadingRegistro}
+          required
         />
 
         <label className="flex items-center gap-2 text-sm">
@@ -103,18 +118,28 @@ const SignUpMobile: React.FC = () => {
             type="checkbox"
             checked={accepted}
             onChange={(e) => setAccepted(e.target.checked)}
+            disabled={loadingRegistro}
           />
           Acepto términos
         </label>
 
-        <button className="w-full bg-[#3A2F2F] text-white py-3 rounded-2xl">
-          Registrarse
+        <button
+          type="submit"
+          disabled={loadingRegistro}
+          className={`w-full text-white py-3 rounded-2xl font-semibold transition ${
+            loadingRegistro
+              ? "!bg-gray-400 cursor-not-allowed"
+              : "!bg-red-600"
+          }`}
+        >
+          {loadingRegistro ? "Registrando..." : "Registrarse"}
         </button>
 
         <button
           type="button"
           onClick={() => navigate("/login")}
-          className="text-center text-gray-500 w-full"
+          disabled={loadingRegistro}
+          className="text-center text-gray-500 w-full disabled:opacity-60"
         >
           Ya tengo cuenta
         </button>
