@@ -321,6 +321,16 @@ const Comprar: React.FC = () => {
     setTotalSeleccionado(total);
   };
 
+  const obtenerDistanciaSupermercado = (supermercado: string) => {
+    let key = "";
+
+    if (supermercado.toLowerCase().includes("jumbo")) key = "Jumbo";
+    else if (supermercado.toLowerCase().includes("vea")) key = "Vea";
+    else if (supermercado.toLowerCase().includes("dia")) key = "Dia";
+
+    return distancias.find((d) => d.nombre === key);
+  };
+
   if (procesando) {
     return (
       <div className="space-y-4 p-4 pb-32">
@@ -343,6 +353,7 @@ const Comprar: React.FC = () => {
     <div className="space-y-6 pb-32">
       {comparaciones.map(({ supermercado, total, faltantes, productos }) => {
         const estaExpandido = expandido[supermercado] ?? false;
+        const infoDistancia = obtenerDistanciaSupermercado(supermercado);
 
         return (
           <div
@@ -354,12 +365,21 @@ const Comprar: React.FC = () => {
             }`}
           >
             <div className="px-4 py-4 bg-white">
-              <div className="flex justify-between items-center">
-                <span className="font-medium">{supermercado}</span>
+              <div className="flex justify-between items-center gap-3">
+                <div>
+                  <span className="font-medium">{supermercado}</span>
+
+                  {infoDistancia && (
+                    <div className="text-xs text-gray-500 mt-1 leading-snug">
+                      {infoDistancia.sucursal} ·{" "}
+                      {infoDistancia.distancia.toFixed(2)} km
+                    </div>
+                  )}
+                </div>
 
                 <button
                   onClick={() => toggleExpandido(supermercado)}
-                  className="flex items-center gap-1 font-semibold"
+                  className="flex items-center gap-1 font-semibold shrink-0"
                 >
                   <span>${total.toLocaleString()}</span>
                   {estaExpandido ? <ChevronUp /> : <ChevronDown />}
