@@ -5,17 +5,27 @@ import { UserModel } from "../models/user.model";
 import { transporter } from "../config/mailer";
 
 /* ======================================================
-   1. SOLICITAR RESET (envía mail)
+   1. SOLICITAR RESET (envía mail si el usuario existe)
 ====================================================== */
 export const requestPasswordReset = async (req: Request, res: Response) => {
-  const { email } = req.body;
+  const email = String(req.body.email || "").trim();
+
+  const respuestaGenerica = {
+    message: "Si el email existe, se envió un link de recuperación",
+  };
 
   try {
+    // Se responde siempre igual para no revelar si un correo está registrado o no.
+    if (!email) {
+      res.json(respuestaGenerica);
+      return;
+    }
+
     const user = await UserModel.findOne({ email });
 
-    // Se responde siempre igual para no revelar si un correo está registrado o no.
+    // Si el usuario no existe, no se envía correo, pero se responde igual.
     if (!user) {
-      res.json({ message: "Si el email existe, se envió un link" });
+      res.json(respuestaGenerica);
       return;
     }
 
@@ -47,10 +57,10 @@ export const requestPasswordReset = async (req: Request, res: Response) => {
       `,
     });
 
-    res.json({ message: "Si el email existe, se envió un link" });
+    res.json(respuestaGenerica);
 
   } catch (error) {
-    console.error(error);
+    console.error("Error en requestPasswordReset:", error);
     res.status(500).json({ error: "Error servidor" });
   }
 };
