@@ -15,8 +15,6 @@ type ProductoAPI = {
   imagen: string;
   supermercado: string;
   link: string;
-  
-  
 };
 
 type Props = {
@@ -33,6 +31,7 @@ type Props = {
   setPage: (n: number) => void;
   soloOfertas: boolean;
   setSoloOfertas: React.Dispatch<React.SetStateAction<boolean>>;
+  loadingProductos: boolean;
 };
 
 const HomeDesktop: React.FC<Props> = ({
@@ -49,6 +48,7 @@ const HomeDesktop: React.FC<Props> = ({
   setPage,
   soloOfertas,
   setSoloOfertas,
+  loadingProductos,
 }) => {
   const { cartCount } = useCart();
   const navigate = useNavigate();
@@ -65,7 +65,7 @@ const HomeDesktop: React.FC<Props> = ({
       {/* ================= HEADER ================= */}
       <header className="bg-white border-b sticky top-0 z-20">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center gap-4">
-          
+
           <h1 className="text-2xl font-bold tracking-tight">
             Compar<span className="text-[#EF3340]">AR</span>
           </h1>
@@ -116,42 +116,44 @@ const HomeDesktop: React.FC<Props> = ({
       {/* ================= MAIN ================= */}
       <main className="max-w-7xl mx-auto px-6 py-6">
 
-      {/* TITULO + FILTRO */}
-    <div className="grid grid-cols-12 mb-6">
-      <div className="col-span-3" />
-      <div className="col-span-9 flex items-center justify-between">
-        <h2 className="text-lg font-semibold">
-          {soloOfertas ? "Ofertas destacadas" : "Todos los productos"}
-        </h2>
+        {/* TITULO + FILTRO */}
+        <div className="grid grid-cols-12 mb-6">
+          <div className="col-span-3" />
+          <div className="col-span-9 flex items-center justify-between">
+            <h2 className="text-lg font-semibold">
+              {soloOfertas ? "Ofertas destacadas" : "Todos los productos"}
+            </h2>
 
-        <div className="flex items-center gap-4">
-          <span className="text-sm text-gray-600">
-            {totalProducts} {soloOfertas ? "ofertas" : "productos"}
-          </span>
+            <div className="flex items-center gap-4">
+              <span className="text-sm text-gray-600">
+                {loadingProductos
+                  ? "Cargando..."
+                  : `${totalProducts} ${soloOfertas ? "ofertas" : "productos"}`}
+              </span>
 
-          <div className="flex items-center gap-3">
-            <span className="text-sm text-gray-700">
-              Solo ofertas
-            </span>
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-gray-700">
+                  Solo ofertas
+                </span>
 
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={soloOfertas}
-                onChange={() => setSoloOfertas((prev) => !prev)}
-                className="sr-only peer"
-              />
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={soloOfertas}
+                    onChange={() => setSoloOfertas((prev) => !prev)}
+                    className="sr-only peer"
+                  />
 
-              {/* Fondo */}
-              <div className="w-12 h-7 bg-gray-400 rounded-full peer peer-checked:bg-gray-500 transition" />
+                  {/* Fondo */}
+                  <div className="w-12 h-7 bg-gray-400 rounded-full peer peer-checked:bg-gray-500 transition" />
 
-              {/* Círculo */}
-              <div className="absolute left-1 top-1 w-5 h-5 bg-white rounded-full shadow transition peer-checked:translate-x-5" />
-            </label>
+                  {/* Círculo */}
+                  <div className="absolute left-1 top-1 w-5 h-5 bg-white rounded-full shadow transition peer-checked:translate-x-5" />
+                </label>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
 
         {/* GRID PRINCIPAL */}
         <div className="grid grid-cols-12 gap-6 items-stretch">
@@ -197,27 +199,46 @@ const HomeDesktop: React.FC<Props> = ({
 
           {/* PRODUCTOS */}
           <section className="col-span-9">
-            <div className="grid grid-cols-2 lg:grid-cols-3 gap-6">
-              {productos.map((prod) => (
-                <ProductCard
-                
-                titulo={prod.titulo}
-                precio_base={prod.precio_base}
-                promocion={prod.promocion}
-                oferta_texto={prod.oferta_texto}
-                imagen={prod.imagen}
-                link={prod.link}
-                supermercado={prod.supermercado}
-               
-                
-              />
-              ))}
-            </div>
+            {loadingProductos ? (
+              <div className="space-y-4">
+                <p className="text-center text-gray-500">
+                  Cargando productos...
+                </p>
+
+                <div className="grid grid-cols-2 lg:grid-cols-3 gap-6 animate-pulse">
+                  <div className="h-80 bg-gray-200 rounded-3xl"></div>
+                  <div className="h-80 bg-gray-200 rounded-3xl"></div>
+                  <div className="h-80 bg-gray-200 rounded-3xl"></div>
+                  <div className="h-80 bg-gray-200 rounded-3xl"></div>
+                  <div className="h-80 bg-gray-200 rounded-3xl"></div>
+                  <div className="h-80 bg-gray-200 rounded-3xl"></div>
+                </div>
+              </div>
+            ) : productos.length === 0 ? (
+              <div className="text-center text-gray-500 py-16">
+                No se encontraron productos.
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 lg:grid-cols-3 gap-6">
+                {productos.map((prod, i) => (
+                  <ProductCard
+                    key={`${prod.titulo}-${prod.supermercado}-${i}`}
+                    titulo={prod.titulo}
+                    precio_base={prod.precio_base}
+                    promocion={prod.promocion}
+                    oferta_texto={prod.oferta_texto}
+                    imagen={prod.imagen}
+                    link={prod.link}
+                    supermercado={prod.supermercado}
+                  />
+                ))}
+              </div>
+            )}
           </section>
         </div>
 
         {/* PAGINACIÓN */}
-        {totalPages > 1 && (
+        {!loadingProductos && totalPages > 1 && (
           <div className="grid grid-cols-12 mt-3">
             <div className="col-span-3" />
             <div className="col-span-9">

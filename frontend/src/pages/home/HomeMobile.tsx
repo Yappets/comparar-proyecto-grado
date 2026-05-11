@@ -22,6 +22,7 @@ type Props = {
   search: string;
   setSearch: (v: string) => void;
   productos: ProductoAPI[];
+  loadingProductos: boolean;
 };
 
 const HomeMobile: React.FC<Props> = ({
@@ -32,15 +33,16 @@ const HomeMobile: React.FC<Props> = ({
   search,
   setSearch,
   productos,
+  loadingProductos,
 }) => {
   return (
     <div className="min-h-screen flex flex-col bg-white">
-      
+
       {/* ================= HEADER ================= */}
       <div className="fixed top-0 left-0 right-0 bg-white z-10 shadow-md pb-2">
-        
+
         <div className="px-6 py-4 flex justify-between items-center">
-  
+
           {/* LOGO TEXTO */}
           <div className="text-base font-bold text-black leading-none">
             Compar<span className="text-[#EF3340]">AR</span>
@@ -102,19 +104,36 @@ const HomeMobile: React.FC<Props> = ({
 
       {/* ================= PRODUCTOS ================= */}
       <div className="pt-[320px] pb-16 px-6 mb-6 space-y-4">
-        {productos.map((prod, i) => (
-          <ProductCard
-            key={`${prod.titulo}-${i}`}
-            titulo={prod.titulo}
-            precio_base={prod.precio_base}
-            promocion={prod.promocion}
-            oferta_texto={prod.oferta_texto}
-            imagen={prod.imagen}
-            link={prod.link}
-            supermercado={prod.supermercado}
-           
-          />
-        ))}
+        {loadingProductos ? (
+          <>
+            <p className="text-center text-gray-500">
+              Cargando productos...
+            </p>
+
+            <div className="animate-pulse space-y-4">
+              <div className="h-40 bg-gray-200 rounded-3xl"></div>
+              <div className="h-40 bg-gray-200 rounded-3xl"></div>
+              <div className="h-40 bg-gray-200 rounded-3xl"></div>
+            </div>
+          </>
+        ) : productos.length === 0 ? (
+          <p className="text-center text-gray-500">
+            No se encontraron productos.
+          </p>
+        ) : (
+          productos.map((prod, i) => (
+            <ProductCard
+              key={`${prod.titulo}-${prod.supermercado}-${i}`}
+              titulo={prod.titulo}
+              precio_base={prod.precio_base}
+              promocion={prod.promocion}
+              oferta_texto={prod.oferta_texto}
+              imagen={prod.imagen}
+              link={prod.link}
+              supermercado={prod.supermercado}
+            />
+          ))
+        )}
       </div>
 
       {/* ================= BOTTOM NAV ================= */}

@@ -37,6 +37,7 @@ const Home: React.FC = () => {
   const [soloOfertas, setSoloOfertas] = useState(true);
 
   const [productos, setProductos] = useState<ProductoApi[]>([]);
+  const [loadingProductos, setLoadingProductos] = useState(true);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const [search, setSearch] = useState("");
   const [pageDesktop, setPageDesktop] = useState(1);
@@ -58,6 +59,8 @@ const Home: React.FC = () => {
   /* ================= FETCH ================= */
 
   useEffect(() => {
+    setLoadingProductos(true);
+
     fetch(`${API_URL}/api/productos`)
       .then((res) => res.json())
       .then((data: ProductoApi[]) => {
@@ -65,7 +68,10 @@ const Home: React.FC = () => {
       })
       .catch((err) =>
         console.error("Error al cargar productos en Home:", err)
-      );
+      )
+      .finally(() => {
+        setLoadingProductos(false);
+      });
   }, []);
 
   /* ================= HANDLERS ================= */
@@ -87,11 +93,10 @@ const Home: React.FC = () => {
       const token = localStorage.getItem("token");
 
       const res = await fetch(`${API_URL}/api/user/direcciones`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       const data = await res.json();
 
@@ -117,25 +122,24 @@ const Home: React.FC = () => {
 
   /* ================= FILTRO ================= */
 
- const productosFiltrados = useMemo(() => {
-  const q = search.trim().toLowerCase();
+  const productosFiltrados = useMemo(() => {
+    const q = search.trim().toLowerCase();
 
-  // 🔍 SI HAY BÚSQUEDA → IGNORA FILTRO
-  if (q) {
-    return productos.filter((p) =>
-      p.titulo.toLowerCase().includes(q)
-    );
-  }
+    // 🔍 SI HAY BÚSQUEDA → IGNORA FILTRO
+    if (q) {
+      return productos.filter((p) =>
+        p.titulo.toLowerCase().includes(q)
+      );
+    }
 
-  // FILTRO DE OFERTAS
-  if (soloOfertas) {
-    return productos.filter((p) => p.promocion !== null);
-  }
+    // FILTRO DE OFERTAS
+    if (soloOfertas) {
+      return productos.filter((p) => p.promocion !== null);
+    }
 
-  // TODOS LOS PRODUCTOS
-  return productos;
-
-}, [productos, search, soloOfertas]);
+    // TODOS LOS PRODUCTOS
+    return productos;
+  }, [productos, search, soloOfertas]);
 
   useEffect(() => {
     setPageDesktop(1);
@@ -180,6 +184,7 @@ const Home: React.FC = () => {
           search={search}
           setSearch={setSearch}
           productos={productosFiltrados}
+          loadingProductos={loadingProductos}
         />
       </div>
 
@@ -199,6 +204,7 @@ const Home: React.FC = () => {
           setPage={setPageDesktop}
           soloOfertas={soloOfertas}
           setSoloOfertas={setSoloOfertas}
+          loadingProductos={loadingProductos}
         />
       </div>
 
