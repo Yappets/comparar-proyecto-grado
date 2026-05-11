@@ -230,11 +230,36 @@ try:
         url = f"https://diaonline.supermercadosdia.com.ar/bebidas?page={pagina_actual}"
         print(f"\nPágina {pagina_actual}")
 
-        driver.get(url)
+        # =========================
+        # RETRY DE CARGA DE PÁGINA
+        # =========================
+        pagina_cargada = False
 
-        wait.until(EC.presence_of_all_elements_located(
-            (By.CSS_SELECTOR, "section.vtex-product-summary-2-x-container")
-        ))
+        for intento in range(3):
+            try:
+                driver.get(url)
+
+                wait.until(EC.presence_of_all_elements_located(
+                    (By.CSS_SELECTOR, "section.vtex-product-summary-2-x-container")
+                ))
+
+                pagina_cargada = True
+                break
+
+            except Exception as e:
+                print(f"Retry {intento + 1}/3")
+                print(f"⚠️ Error cargando página {pagina_actual}: {e}")
+
+                try:
+                    driver.execute_script("window.stop();")
+                except:
+                    pass
+
+                time.sleep(2)
+
+        if not pagina_cargada:
+            print(f"⛔ No se pudo cargar la página {pagina_actual} después de 3 intentos")
+            break
 
         scroll_debug(driver)
 
