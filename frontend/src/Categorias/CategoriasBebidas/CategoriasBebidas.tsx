@@ -22,6 +22,7 @@ const ITEMS_POR_PAGINA = 6;
 
 const CategoriasBebidas: React.FC = () => {
   const [productos, setProductos] = useState<ProductoApi[]>([]);
+  const [loadingProductos, setLoadingProductos] = useState(true);
   const [soloOfertas, setSoloOfertas] = useState(true);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
@@ -29,10 +30,18 @@ const CategoriasBebidas: React.FC = () => {
   /* ================= FETCH ================= */
 
   useEffect(() => {
+    setLoadingProductos(true);
+
     fetch(`${API_URL}/api/productos`)
       .then((res) => res.json())
       .then((data: ProductoApi[]) => {
-        setProductos(data); // 
+        setProductos(data);
+      })
+      .catch((err) =>
+        console.error("Error al cargar productos en Categoría Bebidas:", err)
+      )
+      .finally(() => {
+        setLoadingProductos(false);
       });
   }, []);
 
@@ -89,6 +98,7 @@ const CategoriasBebidas: React.FC = () => {
     setSoloOfertas,
     search,
     setSearch,
+    loadingProductos,
   };
 
   return (

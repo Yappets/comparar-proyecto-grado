@@ -28,6 +28,7 @@ type Props = {
   setSoloOfertas: React.Dispatch<React.SetStateAction<boolean>>;
   search: string;
   setSearch: (v: string) => void;
+  loadingProductos: boolean;
 };
 
 const CategoriasBebidasMobile: React.FC<Props> = ({
@@ -40,6 +41,7 @@ const CategoriasBebidasMobile: React.FC<Props> = ({
   setSoloOfertas,
   search,
   setSearch,
+  loadingProductos,
 }) => {
   const navigate = useNavigate();
   const { cartCount } = useCart();
@@ -62,7 +64,7 @@ const CategoriasBebidasMobile: React.FC<Props> = ({
           className="flex-1 px-3 py-2 border rounded-full text-sm"
         />
 
-       <button
+        <button
           onClick={() => navigate("/resumen")}
           className="relative flex items-center justify-center !bg-red-600"
         >
@@ -91,7 +93,9 @@ const CategoriasBebidasMobile: React.FC<Props> = ({
 
           <div className="flex justify-between items-center mt-2">
             <span className="text-xs text-gray-600">
-              {totalProducts} productos
+              {loadingProductos
+                ? "Cargando..."
+                : `${totalProducts} productos`}
             </span>
 
             <div className="flex items-center gap-2">
@@ -122,23 +126,41 @@ const CategoriasBebidasMobile: React.FC<Props> = ({
         </div>
 
         {/* GRID MOBILE */}
-        <div className="grid grid-cols-1 gap-4">
-          {productos.map((prod) => (
-            <ProductCard
-              key={prod.producto_key}
-              titulo={prod.titulo}
-              precio_base={prod.precio_base}
-              promocion={prod.promocion}
-              oferta_texto={prod.oferta_texto}
-              imagen={prod.imagen}
-              link={prod.link}
-              supermercado={prod.supermercado}
-            />
-          ))}
-        </div>
+        {loadingProductos ? (
+          <div className="space-y-4">
+            <p className="text-center text-gray-500">
+              Cargando productos...
+            </p>
+
+            <div className="animate-pulse space-y-4">
+              <div className="h-40 bg-gray-200 rounded-3xl"></div>
+              <div className="h-40 bg-gray-200 rounded-3xl"></div>
+              <div className="h-40 bg-gray-200 rounded-3xl"></div>
+            </div>
+          </div>
+        ) : productos.length === 0 ? (
+          <p className="text-center text-gray-500 py-10">
+            No se encontraron productos.
+          </p>
+        ) : (
+          <div className="grid grid-cols-1 gap-4">
+            {productos.map((prod, i) => (
+              <ProductCard
+                key={prod.producto_key || `${prod.titulo}-${prod.supermercado}-${i}`}
+                titulo={prod.titulo}
+                precio_base={prod.precio_base}
+                promocion={prod.promocion}
+                oferta_texto={prod.oferta_texto}
+                imagen={prod.imagen}
+                link={prod.link}
+                supermercado={prod.supermercado}
+              />
+            ))}
+          </div>
+        )}
 
         {/* PAGINACIÓN */}
-        {totalPages > 1 && (
+        {!loadingProductos && totalPages > 1 && (
           <div className="mt-6">
             <Pagination
               page={page}

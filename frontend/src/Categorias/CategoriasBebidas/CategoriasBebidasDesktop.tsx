@@ -27,6 +27,7 @@ type Props = {
   setSoloOfertas: React.Dispatch<React.SetStateAction<boolean>>;
   search: string;
   setSearch: (v: string) => void;
+  loadingProductos: boolean;
 };
 
 const CategoriasBebidasDesktop: React.FC<Props> = ({
@@ -39,6 +40,7 @@ const CategoriasBebidasDesktop: React.FC<Props> = ({
   setSoloOfertas,
   search,
   setSearch,
+  loadingProductos,
 }) => {
   const { cartCount } = useCart();
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -51,13 +53,12 @@ const CategoriasBebidasDesktop: React.FC<Props> = ({
       <div className="max-w-7xl mx-auto px-6 py-4 flex items-center gap-4">
 
         {/* BACK */}
-          <button
-            onClick={() => navigate(-1)}
-            className="text-black mt-1"
-          >
-            <ArrowLeft size={24} />
-          </button>
-
+        <button
+          onClick={() => navigate(-1)}
+          className="text-black mt-1"
+        >
+          <ArrowLeft size={24} />
+        </button>
 
         {/* BUSCADOR */}
         <input
@@ -69,20 +70,20 @@ const CategoriasBebidasDesktop: React.FC<Props> = ({
 
         {/* CARRITO */}
         <button
-            onClick={() => setIsCartOpen(true)}
-            className="relative w-14 h-14 rounded-full !bg-red-600 hover:bg-[#d82b37] flex items-center justify-center shadow-md transition"
-          >
-            <img
-              src="/icons/icono_carrito.png"
-              alt="Carrito"
-              className="h-7 w-auto object-contain"
-            />
-            {cartCount > 0 && (
-              <span className="absolute -top-1 -right-1 !bg-blue-600 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                {cartCount}
-              </span>
-            )}
-          </button>
+          onClick={() => setIsCartOpen(true)}
+          className="relative w-14 h-14 rounded-full !bg-red-600 hover:bg-[#d82b37] flex items-center justify-center shadow-md transition"
+        >
+          <img
+            src="/icons/icono_carrito.png"
+            alt="Carrito"
+            className="h-7 w-auto object-contain"
+          />
+          {cartCount > 0 && (
+            <span className="absolute -top-1 -right-1 !bg-blue-600 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+              {cartCount}
+            </span>
+          )}
+        </button>
 
       </div>
 
@@ -94,53 +95,79 @@ const CategoriasBebidasDesktop: React.FC<Props> = ({
 
         <div className="flex items-center gap-4">
 
-  <span className="text-sm text-gray-600">
-    {totalProducts} {soloOfertas ? "ofertas" : "productos"}
-  </span>
+          <span className="text-sm text-gray-600">
+            {loadingProductos
+              ? "Cargando..."
+              : `${totalProducts} ${soloOfertas ? "ofertas" : "productos"}`}
+          </span>
 
-    <div className="flex items-center gap-3">
-      <span className="text-sm text-gray-700">
-        Solo ofertas
-      </span>
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-gray-700">
+              Solo ofertas
+            </span>
 
-      <label className="relative inline-flex items-center cursor-pointer">
-        <input
-          type="checkbox"
-          checked={soloOfertas}
-          onChange={() =>
-            setSoloOfertas((prev) => !prev)
-          }
-          className="sr-only peer"
-        />
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={soloOfertas}
+                onChange={() =>
+                  setSoloOfertas((prev) => !prev)
+                }
+                className="sr-only peer"
+              />
 
-        {/* Fondo */}
-        <div className="w-12 h-7 bg-gray-400 rounded-full peer-checked:bg-gray-500 transition" />
+              {/* Fondo */}
+              <div className="w-12 h-7 bg-gray-400 rounded-full peer-checked:bg-gray-500 transition" />
 
-        {/* Círculo */}
-        <div className="absolute left-1 top-1 w-5 h-5 bg-white rounded-full shadow transition peer-checked:translate-x-5" />
-      </label>
-    </div>
+              {/* Círculo */}
+              <div className="absolute left-1 top-1 w-5 h-5 bg-white rounded-full shadow transition peer-checked:translate-x-5" />
+            </label>
+          </div>
 
-  </div>
+        </div>
       </div>
 
       {/* PRODUCTOS */}
-      <div className="max-w-7xl mx-auto px-6 grid grid-cols-3 gap-6">
-        {productos.map((prod) => (
-          <ProductCard
-            key={prod.producto_key}
-            titulo={prod.titulo}
-            precio_base={prod.precio_base}
-            promocion={prod.promocion}
-            oferta_texto={prod.oferta_texto}
-            imagen={prod.imagen}
-            link={prod.link}
-            supermercado={prod.supermercado}
-          />
-        ))}
+      <div className="max-w-7xl mx-auto px-6">
+        {loadingProductos ? (
+          <div className="space-y-4">
+            <p className="text-center text-gray-500">
+              Cargando productos...
+            </p>
+
+            <div className="grid grid-cols-3 gap-6 animate-pulse">
+              <div className="h-80 bg-gray-200 rounded-3xl"></div>
+              <div className="h-80 bg-gray-200 rounded-3xl"></div>
+              <div className="h-80 bg-gray-200 rounded-3xl"></div>
+              <div className="h-80 bg-gray-200 rounded-3xl"></div>
+              <div className="h-80 bg-gray-200 rounded-3xl"></div>
+              <div className="h-80 bg-gray-200 rounded-3xl"></div>
+            </div>
+          </div>
+        ) : productos.length === 0 ? (
+          <div className="text-center text-gray-500 py-16">
+            No se encontraron productos.
+          </div>
+        ) : (
+          <div className="grid grid-cols-3 gap-6">
+            {productos.map((prod, i) => (
+              <ProductCard
+                key={prod.producto_key || `${prod.titulo}-${prod.supermercado}-${i}`}
+                titulo={prod.titulo}
+                precio_base={prod.precio_base}
+                promocion={prod.promocion}
+                oferta_texto={prod.oferta_texto}
+                imagen={prod.imagen}
+                link={prod.link}
+                supermercado={prod.supermercado}
+              />
+            ))}
+          </div>
+        )}
       </div>
+
       {/* PAGINACIÓN */}
-      {totalPages > 1 && (
+      {!loadingProductos && totalPages > 1 && (
         <div className="mt-6 flex justify-center">
           <Pagination
             page={page}
