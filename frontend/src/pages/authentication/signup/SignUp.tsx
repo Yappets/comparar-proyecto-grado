@@ -1,7 +1,7 @@
 // src/pages/signup/SignUp.tsx
 import React, { useEffect, useState } from "react";
 import SignUpMobile from "./SignUpMobile";
-import SignUpDesktop from "./SignUpDeskptop";
+import SignUpDesktop from "./SignUpDesktop";
 
 const SignUp: React.FC = () => {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
