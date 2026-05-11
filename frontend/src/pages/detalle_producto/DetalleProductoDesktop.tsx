@@ -67,18 +67,29 @@ const DetalleProductoDesktop = () => {
   const { nombre } = useParams<{ nombre: string }>();
 
   const [productos, setProductos] = useState<Producto[]>([]);
+  const [loadingProducto, setLoadingProducto] = useState(true);
 
   /* ================= FETCH ================= */
 
   useEffect(() => {
-    if (!nombre) return;
+    if (!nombre) {
+      setLoadingProducto(false);
+      return;
+    }
+
+    setLoadingProducto(true);
 
     fetch(`${API_URL}/api/productos/detalle/${encodeURIComponent(nombre)}`)
       .then((res) => res.json())
-      .then((data: Producto[]) => setProductos(data))
+      .then((data: Producto[]) => {
+        setProductos(Array.isArray(data) ? data : []);
+      })
       .catch((err) =>
         console.error("Error al cargar producto", err)
-      );
+      )
+      .finally(() => {
+        setLoadingProducto(false);
+      });
   }, [nombre]);
 
   /* ================= DATA ================= */
@@ -136,94 +147,125 @@ const DetalleProductoDesktop = () => {
         </button>
 
         <h1 className="text-xl font-semibold">
-          {titulo}
+          {loadingProducto ? "Cargando producto..." : titulo}
         </h1>
       </div>
 
-      {/* CONTENIDO */}
-      <div className="max-w-5xl mx-auto p-6">
+      {/* CARGANDO */}
+      {loadingProducto ? (
+        <div className="max-w-5xl mx-auto p-6">
+          <p className="text-center text-gray-500 mb-6">
+            Cargando producto...
+          </p>
 
-        {/* IMAGEN */}
-        <div className="flex justify-center mb-6">
-          <img
-            src={imagenPrincipal}
-            alt={titulo}
-            className="max-h-[250px] object-contain"
-          />
-        </div>
+          <div className="animate-pulse space-y-6">
+            <div className="mx-auto h-[220px] w-[260px] bg-gray-200 rounded-2xl"></div>
 
-        {/* CARD */}
-        <div className="bg-white rounded-2xl shadow p-6">
+            <div className="bg-white rounded-2xl shadow p-6">
+              <div className="h-6 bg-gray-200 rounded-xl w-1/2 mx-auto mb-6"></div>
 
-          <h2 className="text-center text-lg font-bold mb-6">
-            {titulo}
-          </h2>
-
-          <div className="space-y-4">
-
-            {visibles.map((p, idx) => {
-              const precioBase = p.precio_base ?? 0;
-
-              const precioFinal = calcularPrecioUnitario(
-                precioBase,
-                p.promocion
-              );
-
-              return (
-                <div
-                  key={idx}
-                  className="flex items-center justify-between bg-gray-100 rounded-xl px-4 py-3"
-                >
-                  {/* LOGO */}
-                  <div className="w-[20%]">
-                    <img
-                      src={`/icons/${p.supermercado
-                        .toLowerCase()
-                        .replace(" ", "")}.png`}
-                      alt={p.supermercado}
-                      className="w-10 h-10 object-contain"
-                    />
-                  </div>
-
-                  {/* PROMO */}
-                  <div className="w-[40%] text-center text-sm">
-                    {p.oferta_texto?.toLowerCase() !==
-                    "no disponible"
-                      ? p.oferta_texto
-                      : "Sin oferta"}
-                  </div>
-
-                  {/* PRECIO */}
-                  <div className="w-[40%] text-right">
-                    {p.promocion && (
-                      <div className="text-xs text-gray-400 line-through">
-                        ${precioBase.toFixed(0)}
-                      </div>
-                    )}
-
-                    <div className="text-lg font-semibold">
-                      ${precioFinal.toFixed(0)}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-
+              <div className="space-y-4">
+                <div className="h-16 bg-gray-200 rounded-xl"></div>
+                <div className="h-16 bg-gray-200 rounded-xl"></div>
+                <div className="h-16 bg-gray-200 rounded-xl"></div>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-
-      {/* FOOTER */}
-      <div className="fixed bottom-0 left-0 w-full bg-white p-4 shadow-lg">
-        <div className="max-w-5xl mx-auto flex justify-center">
-          <button
-            onClick={handleAgregar}
-            className="!bg-red-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-[#2b1f1c]"
-          >
-            Agregar
-          </button>
+      ) : productos.length === 0 ? (
+        <div className="max-w-5xl mx-auto p-6">
+          <p className="text-center text-gray-500">
+            No se encontró información del producto.
+          </p>
         </div>
-      </div>
+      ) : (
+        <>
+          {/* CONTENIDO */}
+          <div className="max-w-5xl mx-auto p-6">
+
+            {/* IMAGEN */}
+            <div className="flex justify-center mb-6">
+              <img
+                src={imagenPrincipal}
+                alt={titulo}
+                className="max-h-[250px] object-contain"
+              />
+            </div>
+
+            {/* CARD */}
+            <div className="bg-white rounded-2xl shadow p-6">
+
+              <h2 className="text-center text-lg font-bold mb-6">
+                {titulo}
+              </h2>
+
+              <div className="space-y-4">
+
+                {visibles.map((p, idx) => {
+                  const precioBase = p.precio_base ?? 0;
+
+                  const precioFinal = calcularPrecioUnitario(
+                    precioBase,
+                    p.promocion
+                  );
+
+                  return (
+                    <div
+                      key={idx}
+                      className="flex items-center justify-between bg-gray-100 rounded-xl px-4 py-3"
+                    >
+                      {/* LOGO */}
+                      <div className="w-[20%]">
+                        <img
+                          src={`/icons/${p.supermercado
+                            .toLowerCase()
+                            .replace(" ", "")}.png`}
+                          alt={p.supermercado}
+                          className="w-10 h-10 object-contain"
+                        />
+                      </div>
+
+                      {/* PROMO */}
+                      <div className="w-[40%] text-center text-sm">
+                        {p.oferta_texto?.toLowerCase() !==
+                        "no disponible"
+                          ? p.oferta_texto
+                          : "Sin oferta"}
+                      </div>
+
+                      {/* PRECIO */}
+                      <div className="w-[40%] text-right">
+                        {p.promocion && (
+                          <div className="text-xs text-gray-400 line-through">
+                            ${precioBase.toFixed(0)}
+                          </div>
+                        )}
+
+                        <div className="text-lg font-semibold">
+                          ${precioFinal.toFixed(0)}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+
+              </div>
+            </div>
+          </div>
+
+          {/* FOOTER */}
+          <div className="fixed bottom-0 left-0 w-full bg-white p-4 shadow-lg">
+            <div className="max-w-5xl mx-auto flex justify-center">
+              <button
+                onClick={handleAgregar}
+                className="!bg-red-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-[#2b1f1c]"
+              >
+                Agregar
+              </button>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 };

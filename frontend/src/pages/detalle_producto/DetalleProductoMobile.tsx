@@ -67,18 +67,29 @@ const DetalleProductoMobile = () => {
   const { nombre } = useParams<{ nombre: string }>();
 
   const [productos, setProductos] = useState<Producto[]>([]);
+  const [loadingProducto, setLoadingProducto] = useState(true);
 
   /* ================= FETCH ================= */
 
   useEffect(() => {
-    if (!nombre) return;
+    if (!nombre) {
+      setLoadingProducto(false);
+      return;
+    }
+
+    setLoadingProducto(true);
 
     fetch(`${API_URL}/api/productos/detalle/${encodeURIComponent(nombre)}`)
       .then((res) => res.json())
-      .then((data: Producto[]) => setProductos(data))
+      .then((data: Producto[]) => {
+        setProductos(Array.isArray(data) ? data : []);
+      })
       .catch((err) =>
         console.error("Error al cargar producto", err)
-      );
+      )
+      .finally(() => {
+        setLoadingProducto(false);
+      });
   }, [nombre]);
 
   /* ================= DATA ================= */
@@ -140,101 +151,132 @@ const DetalleProductoMobile = () => {
           </button>
 
           <div className="text-lg font-semibold leading-tight break-words">
-            {titulo}
+            {loadingProducto ? "Cargando producto..." : titulo}
           </div>
         </div>
       </div>
 
-      {/* CONTENIDO */}
-      <div className="flex-1 overflow-y-auto">
+      {/* CARGANDO */}
+      {loadingProducto ? (
+        <div className="flex-1 overflow-y-auto px-4 py-6">
+          <p className="text-center text-gray-500 mb-6">
+            Cargando producto...
+          </p>
 
-        {/* IMAGEN */}
-        <div className="flex justify-center items-center py-6 px-4">
-          <img
-            src={imagenPrincipal}
-            alt={titulo}
-            className="max-h-[180px] object-contain"
-          />
-        </div>
+          <div className="animate-pulse">
+            <div className="mx-auto h-[160px] w-[200px] bg-gray-200 rounded-2xl mb-6"></div>
 
-        {/* LISTA */}
-        <div className="px-4 pb-32">
-          <div className="bg-white rounded-3xl shadow-md p-4">
+            <div className="bg-white rounded-3xl shadow-md p-4">
+              <div className="h-6 bg-gray-200 rounded-xl w-2/3 mx-auto mb-4"></div>
 
-            <p className="text-center font-bold text-lg mb-4">
-              {titulo}
-            </p>
-
-            <div className="space-y-3">
-
-              {visibles.map((p, idx) => {
-                const precioBase = p.precio_base ?? 0;
-
-                const precioFinal = calcularPrecioUnitario(
-                  precioBase,
-                  p.promocion
-                );
-
-                return (
-                  <div
-                    key={idx}
-                    className="flex items-center justify-between bg-gray-100 rounded-full px-4 py-3"
-                  >
-                    {/* LOGO */}
-                    <div className="w-[25%] flex items-center">
-                      <img
-                        src={`/icons/${p.supermercado
-                          .toLowerCase()
-                          .replace(" ", "")}.png`}
-                        alt={p.supermercado}
-                        className="w-8 h-8 object-contain"
-                      />
-                    </div>
-
-                    {/* PROMO */}
-                    <div className="w-[45%] text-center">
-                      {p.oferta_texto?.toLowerCase() !==
-                      "no disponible" ? (
-                        <span className="text-gray-700 text-sm">
-                          {p.oferta_texto}
-                        </span>
-                      ) : (
-                        <span className="text-gray-400 text-sm">
-                          Sin oferta
-                        </span>
-                      )}
-                    </div>
-
-                    {/* PRECIO */}
-                    <div className="w-[30%] text-right">
-                      {p.promocion && (
-                        <div className="text-xs text-gray-400 line-through">
-                          ${precioBase.toFixed(0)}
-                        </div>
-                      )}
-
-                      <div className="text-black font-semibold text-lg">
-                        ${precioFinal.toFixed(0)}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-
+              <div className="space-y-3">
+                <div className="h-14 bg-gray-200 rounded-full"></div>
+                <div className="h-14 bg-gray-200 rounded-full"></div>
+                <div className="h-14 bg-gray-200 rounded-full"></div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      ) : productos.length === 0 ? (
+        <div className="flex-1 flex items-center justify-center px-4">
+          <p className="text-center text-gray-500">
+            No se encontró información del producto.
+          </p>
+        </div>
+      ) : (
+        <>
+          {/* CONTENIDO */}
+          <div className="flex-1 overflow-y-auto">
 
-      {/* FOOTER */}
-      <div className="fixed bottom-0 left-0 w-full bg-white px-4 pb-6 pt-3 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] z-30">
-        <button
-          onClick={handleAgregar}
-          className="w-full py-3 text-white font-semibold rounded-full !bg-red-600 hover:bg-[#2b1f1c]"
-        >
-          Agregar
-        </button>
-      </div>
+            {/* IMAGEN */}
+            <div className="flex justify-center items-center py-6 px-4">
+              <img
+                src={imagenPrincipal}
+                alt={titulo}
+                className="max-h-[180px] object-contain"
+              />
+            </div>
+
+            {/* LISTA */}
+            <div className="px-4 pb-32">
+              <div className="bg-white rounded-3xl shadow-md p-4">
+
+                <p className="text-center font-bold text-lg mb-4">
+                  {titulo}
+                </p>
+
+                <div className="space-y-3">
+
+                  {visibles.map((p, idx) => {
+                    const precioBase = p.precio_base ?? 0;
+
+                    const precioFinal = calcularPrecioUnitario(
+                      precioBase,
+                      p.promocion
+                    );
+
+                    return (
+                      <div
+                        key={idx}
+                        className="flex items-center justify-between bg-gray-100 rounded-full px-4 py-3"
+                      >
+                        {/* LOGO */}
+                        <div className="w-[25%] flex items-center">
+                          <img
+                            src={`/icons/${p.supermercado
+                              .toLowerCase()
+                              .replace(" ", "")}.png`}
+                            alt={p.supermercado}
+                            className="w-8 h-8 object-contain"
+                          />
+                        </div>
+
+                        {/* PROMO */}
+                        <div className="w-[45%] text-center">
+                          {p.oferta_texto?.toLowerCase() !==
+                          "no disponible" ? (
+                            <span className="text-gray-700 text-sm">
+                              {p.oferta_texto}
+                            </span>
+                          ) : (
+                            <span className="text-gray-400 text-sm">
+                              Sin oferta
+                            </span>
+                          )}
+                        </div>
+
+                        {/* PRECIO */}
+                        <div className="w-[30%] text-right">
+                          {p.promocion && (
+                            <div className="text-xs text-gray-400 line-through">
+                              ${precioBase.toFixed(0)}
+                            </div>
+                          )}
+
+                          <div className="text-black font-semibold text-lg">
+                            ${precioFinal.toFixed(0)}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* FOOTER */}
+          <div className="fixed bottom-0 left-0 w-full bg-white px-4 pb-6 pt-3 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] z-30">
+            <button
+              onClick={handleAgregar}
+              className="w-full py-3 text-white font-semibold rounded-full !bg-red-600 hover:bg-[#2b1f1c]"
+            >
+              Agregar
+            </button>
+          </div>
+        </>
+      )}
     </div>
   );
 };
