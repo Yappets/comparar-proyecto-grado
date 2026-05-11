@@ -1,4 +1,5 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import BottomNav from "../../components/BottomNav2";
 import ProductCard from "../../components/ProductCard";
 import type { Categoria } from "./Home";
@@ -35,6 +36,14 @@ const HomeMobile: React.FC<Props> = ({
   productos,
   loadingProductos,
 }) => {
+  const navigate = useNavigate();
+
+  const handleCategoriaClick = (label: string) => {
+    if (label === "Bebidas") {
+      navigate("/categoria_bebidas");
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-white">
 
@@ -82,9 +91,11 @@ const HomeMobile: React.FC<Props> = ({
         <div className="overflow-x-auto px-6 mt-6">
           <div className="flex gap-4 w-max pb-2">
             {categorias.map(({ icon, label }) => (
-              <div
+              <button
                 key={label}
-                className="flex flex-col items-center gap-1 shrink-0"
+                type="button"
+                onClick={() => handleCategoriaClick(label)}
+                className="flex flex-col items-center gap-1 shrink-0 !bg-transparent p-0 border-none"
               >
                 <div className="w-20 h-20 bg-[#EF3340] rounded-full flex items-center justify-center shadow-md">
                   <img
@@ -96,7 +107,7 @@ const HomeMobile: React.FC<Props> = ({
                 <span className="text-sm text-black text-center">
                   {label}
                 </span>
-              </div>
+              </button>
             ))}
           </div>
         </div>
