@@ -16,6 +16,8 @@ const ForgotPasswordMobile: React.FC = () => {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
+    if (loading) return;
+
     if (!email) {
       setError("Ingresá un email");
       return;
@@ -37,12 +39,11 @@ const ForgotPasswordMobile: React.FC = () => {
       const body = await res.json();
 
       if (!res.ok) {
-        setError(body.error || "Error");
+        setError(body.error || "Error del servidor");
         return;
       }
 
       setMsg("Te enviamos un email con instrucciones");
-
     } catch {
       setError("No se pudo conectar con el servidor");
     } finally {
@@ -57,7 +58,8 @@ const ForgotPasswordMobile: React.FC = () => {
       <div className="p-4 flex justify-start">
         <button
           onClick={() => navigate(-1)}
-          className="text-black"
+          className="text-black disabled:opacity-60"
+          disabled={loading}
         >
           <ArrowLeft size={24} />
         </button>
@@ -80,14 +82,21 @@ const ForgotPasswordMobile: React.FC = () => {
             <input
               type="email"
               placeholder="Tu correo electrónico"
-              className="w-full p-3 border rounded-xl"
+              className="w-full p-3 border rounded-xl disabled:bg-gray-100"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              disabled={loading}
+              required
             />
 
             <button
+              type="submit"
               disabled={loading}
-              className="w-full !bg-[#EF3340] text-white py-3 rounded-xl font-semibold disabled:opacity-50"
+              className={`w-full text-white py-3 rounded-xl font-semibold transition ${
+                loading
+                  ? "!bg-gray-400 cursor-not-allowed"
+                  : "!bg-[#EF3340]"
+              }`}
             >
               {loading ? "Enviando..." : "Enviar"}
             </button>
@@ -95,7 +104,8 @@ const ForgotPasswordMobile: React.FC = () => {
             <button
               type="button"
               onClick={() => navigate("/login")}
-              className="w-full text-gray-500 text-sm"
+              disabled={loading}
+              className="w-full text-gray-500 text-sm disabled:opacity-60"
             >
               Volver al login
             </button>

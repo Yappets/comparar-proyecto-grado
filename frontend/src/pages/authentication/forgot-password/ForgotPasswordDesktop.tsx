@@ -1,4 +1,4 @@
-// src/pages/autenticacion/ForgotPasswordDesktop.tsx
+// src/pages/authentication/forgot-password/ForgotPasswordDesktop.tsx
 import React, { useState, FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { API_URL } from "../../../config/api";
@@ -9,11 +9,21 @@ const ForgotPasswordDesktop: React.FC = () => {
   const [email, setEmail] = useState("");
   const [msg, setMsg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+
+    if (loading) return;
+
+    if (!email) {
+      setError("Ingresá un email");
+      return;
+    }
+
     setError(null);
     setMsg(null);
+    setLoading(true);
 
     try {
       const res = await fetch(`${API_URL}/api/auth/request-reset`, {
@@ -27,14 +37,15 @@ const ForgotPasswordDesktop: React.FC = () => {
       const body = await res.json();
 
       if (!res.ok) {
-        setError(body.error || "Error");
+        setError(body.error || "Error del servidor");
         return;
       }
 
       setMsg("Te enviamos un email con instrucciones");
-
     } catch {
-      setError("Error de conexión");
+      setError("No se pudo conectar con el servidor");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -55,19 +66,30 @@ const ForgotPasswordDesktop: React.FC = () => {
           <input
             type="email"
             placeholder="Tu correo electrónico"
-            className="w-full p-3 border rounded-xl"
+            className="w-full p-3 border rounded-xl disabled:bg-gray-100"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            disabled={loading}
+            required
           />
 
-          <button className="w-full !bg-red-600 text-white py-3 rounded-xl">
-            Enviar
+          <button
+            type="submit"
+            disabled={loading}
+            className={`w-full text-white py-3 rounded-xl font-semibold transition ${
+              loading
+                ? "!bg-gray-400 cursor-not-allowed"
+                : "!bg-red-600"
+            }`}
+          >
+            {loading ? "Enviando..." : "Enviar"}
           </button>
 
           <button
             type="button"
             onClick={() => navigate("/login")}
-            className="w-full text-gray-500 text-sm"
+            disabled={loading}
+            className="w-full text-gray-500 text-sm disabled:opacity-60"
           >
             Volver al login
           </button>
