@@ -109,38 +109,6 @@ const quitarDuplicados = (items: any[]): any[] => {
 };
 
 /* ======================================================
-   VARIANTES DE CALLE
-====================================================== */
-
-const obtenerVariantesCalle = (calle: string): string[] => {
-  const calleLimpia = calle.replace(/\s+/g, " ").trim();
-  const calleNormalizada = normalizarTexto(calleLimpia);
-
-  const variantes = [
-    calleLimpia,
-    `Miguel de ${calleLimpia}`,
-    `Dr Miguel de ${calleLimpia}`,
-    `Doctor Miguel de ${calleLimpia}`,
-  ];
-
-  // Evita generar "Miguel de Miguel de Azcuénaga" si el usuario ya escribió el nombre completo.
-  const variantesFiltradas = variantes.filter((v) => {
-    const normalizada = normalizarTexto(v);
-
-    if (
-      calleNormalizada.includes("miguel de") &&
-      normalizada !== calleNormalizada
-    ) {
-      return false;
-    }
-
-    return true;
-  });
-
-  return Array.from(new Set(variantesFiltradas));
-};
-
-/* ======================================================
    NOMINATIM SEARCH EN PARALELO
 ====================================================== */
 
@@ -261,16 +229,14 @@ export const buscarDireccion = async (
     }
 
     const calleNormalizada = normalizarTexto(calle);
-    const variantesCalle = obtenerVariantesCalle(calle);
 
-    // Se generan variantes para mejorar la búsqueda sin depender de que el usuario escriba
-    // "Av.", "Avenida", "Calle" o el nombre completo de ciertas calles.
-    const consultas = variantesCalle.flatMap((calleVariante) => [
-      `${calleVariante} ${numero || ""}, Salta Capital, Salta, Argentina`,
-      `Avenida ${calleVariante} ${numero || ""}, Salta Capital, Salta, Argentina`,
-      `Av ${calleVariante} ${numero || ""}, Salta Capital, Salta, Argentina`,
-      `Calle ${calleVariante} ${numero || ""}, Salta Capital, Salta, Argentina`,
-    ]);
+    // Se generan variantes para mejorar la búsqueda sin depender de que el usuario escriba "Av.", "Avenida" o "Calle".
+    const consultas = [
+      `${calle} ${numero || ""}, Salta Capital, Salta, Argentina`,
+      `Avenida ${calle} ${numero || ""}, Salta Capital, Salta, Argentina`,
+      `Av ${calle} ${numero || ""}, Salta Capital, Salta, Argentina`,
+      `Calle ${calle} ${numero || ""}, Salta Capital, Salta, Argentina`,
+    ];
 
     const consultasUnicas = Array.from(
       new Set(consultas.map((c) => c.replace(/\s+/g, " ").trim()))
@@ -305,47 +271,20 @@ export const buscarDireccion = async (
 
       const contieneCalle =
         road.includes(calleNormalizada) ||
-        display.includes(calleNormalizada) ||
-        variantesCalle.some((variante) => {
-          const varianteNormalizada = normalizarTexto(variante);
-
-          return (
-            road.includes(varianteNormalizada) ||
-            display.includes(varianteNormalizada)
-          );
-        });
+        display.includes(calleNormalizada);
 
       const numeroItem = obtenerNumeroDireccion(item);
 
-      // Si el usuario ingresó una altura y Nominatim la devuelve,
-      // se exige que coincida exactamente.
+      // Si el usuario ingresó una altura, se exige que el resultado tenga esa altura real.
       const coincideNumero = !numero || numeroItem === numero;
 
-      // Si Nominatim no devuelve altura, se permite mostrar la calle como resultado aproximado.
-      // Esto evita que búsquedas como "Azcuénaga 2000" queden sin resultados aunque la calle exista.
-      const sinNumeroPeroCalleValida =
-        !!numero && !numeroItem && contieneCalle;
-
-      return (
-        esSaltaCapital(item) &&
-        contieneCalle &&
-        (coincideNumero || sinNumeroPeroCalleValida)
-      );
+      return esSaltaCapital(item) && contieneCalle && coincideNumero;
     });
 
     const resultadosMap = new Map<string, any>();
 
     for (const item of filtrados) {
-      let direccionVisible = formatearDireccionVisible(item, calle);
-
-      const numeroItem = obtenerNumeroDireccion(item);
-
-      // Si el usuario escribió una altura, pero Nominatim no la devuelve,
-      // mostramos la altura ingresada para que el usuario pueda seleccionar la zona aproximada.
-      if (numero && !numeroItem) {
-        const calleResultado = obtenerNombreCalle(item, calle);
-        direccionVisible = `${calleResultado} ${numero}, Salta, Capital, Salta, 4400, Argentina`;
-      }
+      const direccionVisible = formatearDireccionVisible(item, calle);
 
       const key = normalizarTexto(direccionVisible);
 
