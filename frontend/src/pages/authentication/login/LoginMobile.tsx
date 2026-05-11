@@ -1,4 +1,4 @@
-// src/pages/auth/LoginMobile.tsx
+// src/pages/authentication/login/LoginMobile.tsx
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
@@ -10,6 +10,7 @@ type Props = {
   setEmail: (v: string) => void;
   setPassword: (v: string) => void;
   handleSubmit: (e: React.FormEvent) => void;
+  loadingLogin: boolean;
 };
 
 const LoginMobile: React.FC<Props> = ({
@@ -19,17 +20,19 @@ const LoginMobile: React.FC<Props> = ({
   setEmail,
   setPassword,
   handleSubmit,
+  loadingLogin,
 }) => {
   const navigate = useNavigate();
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
 
-      {/* TOP BAR (BLANCA) */}
+      {/* TOP BAR */}
       <div className="p-4 flex justify-start">
         <button
           onClick={() => navigate(-1)}
           className="text-black"
+          disabled={loadingLogin}
         >
           <ArrowLeft size={24} />
         </button>
@@ -63,12 +66,13 @@ const LoginMobile: React.FC<Props> = ({
         <div>
           <label className="text-sm text-gray-600 ml-2">Email</label>
           <input
-            type="Correo electrónico"
+            type="email"
             placeholder="Ingrese correo electrónico"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="w-full mt-1 p-4 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#EF3340]"
+            disabled={loadingLogin}
+            className="w-full mt-1 p-4 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#EF3340] disabled:bg-gray-100"
           />
         </div>
 
@@ -76,28 +80,35 @@ const LoginMobile: React.FC<Props> = ({
         <div>
           <label className="text-sm text-gray-600 ml-2">Contraseña</label>
           <input
-            type="Contraseña"
+            type="password"
             placeholder="Ingrese contraseña"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            className="w-full mt-1 p-4 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#EF3340]"
+            disabled={loadingLogin}
+            className="w-full mt-1 p-4 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#EF3340] disabled:bg-gray-100"
           />
         </div>
 
         {/* LOGIN */}
         <button
           type="submit"
-          className="w-full !bg-[#EF3340] text-white py-3 rounded-xl font-semibold"
+          disabled={loadingLogin}
+          className={`w-full text-white py-3 rounded-xl font-semibold transition ${
+            loadingLogin
+              ? "!bg-gray-400 cursor-not-allowed"
+              : "!bg-[#EF3340]"
+          }`}
         >
-          Ingresar
+          {loadingLogin ? "Iniciando sesión..." : "Ingresar"}
         </button>
 
         {/* REGISTER */}
         <button
           type="button"
           onClick={() => navigate("/signup")}
-          className="w-full !bg-gray-800 text-white py-3 rounded-xl font-semibold"
+          disabled={loadingLogin}
+          className="w-full !bg-gray-800 text-white py-3 rounded-xl font-semibold disabled:opacity-60"
         >
           Registrarse
         </button>
@@ -106,7 +117,8 @@ const LoginMobile: React.FC<Props> = ({
         <button
           type="button"
           onClick={() => navigate("/")}
-          className="text-sm text-gray-500 text-center mt-2"
+          disabled={loadingLogin}
+          className="text-sm text-gray-500 text-center mt-2 disabled:opacity-60"
         >
           Continuar como invitado
         </button>
@@ -115,7 +127,8 @@ const LoginMobile: React.FC<Props> = ({
         <button
           type="button"
           onClick={() => navigate("/forgot-password")}
-          className="text-sm text-blue-600 text-center"
+          disabled={loadingLogin}
+          className="text-sm text-blue-600 text-center disabled:opacity-60"
         >
           ¿Olvidaste tu contraseña?
         </button>

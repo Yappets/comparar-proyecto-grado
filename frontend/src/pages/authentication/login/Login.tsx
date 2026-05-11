@@ -1,4 +1,4 @@
-// src/pages/auth/Login.tsx
+// src/pages/authentication/login/Login.tsx
 import React, { useState, FormEvent, useContext } from "react";
 import { AuthContext } from "../../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -12,11 +12,17 @@ const Login: React.FC = () => {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
   const [error, setError] = useState<string | null>(null);
+  const [loadingLogin, setLoadingLogin] = useState(false);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+
+    if (loadingLogin) return;
+
     setError(null);
+    setLoadingLogin(true);
 
     try {
       const res = await fetch(`${API_URL}/api/auth/login`, {
@@ -32,15 +38,16 @@ const Login: React.FC = () => {
         return;
       }
 
-      // Guarda el token en el contexto/autenticación.
       login(body.token);
 
-      // Guarda el email para poder mostrarlo después en el perfil.
+      // Guarda el email para mostrarlo en el perfil.
       localStorage.setItem("userEmail", email);
 
       navigate("/");
     } catch {
       setError("No se pudo conectar con el servidor");
+    } finally {
+      setLoadingLogin(false);
     }
   };
 
@@ -55,6 +62,7 @@ const Login: React.FC = () => {
           setEmail={setEmail}
           setPassword={setPassword}
           handleSubmit={handleSubmit}
+          loadingLogin={loadingLogin}
         />
       </div>
 
@@ -67,6 +75,7 @@ const Login: React.FC = () => {
           setEmail={setEmail}
           setPassword={setPassword}
           handleSubmit={handleSubmit}
+          loadingLogin={loadingLogin}
         />
       </div>
     </>

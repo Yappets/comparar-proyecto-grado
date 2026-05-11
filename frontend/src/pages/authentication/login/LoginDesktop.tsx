@@ -1,4 +1,4 @@
-// src/pages/auth/LoginDesktop.tsx
+// src/pages/authentication/login/LoginDesktop.tsx
 import React from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -9,6 +9,7 @@ type Props = {
   setEmail: (v: string) => void;
   setPassword: (v: string) => void;
   handleSubmit: (e: React.FormEvent) => void;
+  loadingLogin: boolean;
 };
 
 const LoginDesktop: React.FC<Props> = ({
@@ -18,16 +19,17 @@ const LoginDesktop: React.FC<Props> = ({
   setEmail,
   setPassword,
   handleSubmit,
+  loadingLogin,
 }) => {
   const navigate = useNavigate();
 
   return (
     <div className="min-h-screen flex">
       
-       {/* LADO IZQUIERDO */}
+      {/* LADO IZQUIERDO */}
       <div className="w-1/2 bg-gradient-to-br from-[#EF3340] to-[#FF5A6E] flex flex-col justify-center items-center text-white px-10">
 
-        {/* LOGO TEXTO (NUEVO) */}
+        {/* LOGO TEXTO */}
         <h1 className="text-5xl font-bold mb-6 tracking-tight">
           Compar<span className="text-black">AR</span>
         </h1>
@@ -35,7 +37,6 @@ const LoginDesktop: React.FC<Props> = ({
         <h2 className="text-3xl font-semibold mb-4 text-center">
           Compará precios de forma inteligente
         </h2>
-
 
       </div>
 
@@ -62,6 +63,7 @@ const LoginDesktop: React.FC<Props> = ({
               onChange={(e) => setEmail(e.target.value)}
               className="p-3 border rounded-xl"
               required
+              disabled={loadingLogin}
             />
 
             <input
@@ -71,19 +73,26 @@ const LoginDesktop: React.FC<Props> = ({
               onChange={(e) => setPassword(e.target.value)}
               className="p-3 border rounded-xl"
               required
+              disabled={loadingLogin}
             />
 
             <button
               type="submit"
-              className="!bg-[#EF3340] text-white py-3 rounded-xl font-semibold"
+              disabled={loadingLogin}
+              className={`text-white py-3 rounded-xl font-semibold transition ${
+                loadingLogin
+                  ? "!bg-gray-400 cursor-not-allowed"
+                  : "!bg-[#EF3340]"
+              }`}
             >
-              Ingresar
+              {loadingLogin ? "Iniciando sesión..." : "Ingresar"}
             </button>
 
             <button
               type="button"
               onClick={() => navigate("/signup")}
-              className="!bg-gray-800 text-white py-3 rounded-xl font-semibold"
+              disabled={loadingLogin}
+              className="!bg-gray-800 text-white py-3 rounded-xl font-semibold disabled:opacity-60"
             >
               Registrarse
             </button>
@@ -91,7 +100,8 @@ const LoginDesktop: React.FC<Props> = ({
             <button
               type="button"
               onClick={() => navigate("/")}
-              className="text-sm text-gray-500 mt-2"
+              disabled={loadingLogin}
+              className="text-sm text-gray-500 mt-2 disabled:opacity-60"
             >
               Continuar como invitado
             </button>
@@ -99,12 +109,11 @@ const LoginDesktop: React.FC<Props> = ({
             <button
               type="button"
               onClick={() => navigate("/forgot-password")}
-              className="text-sm text-blue-600 hover:underline text-center"
+              disabled={loadingLogin}
+              className="text-sm text-blue-600 hover:underline text-center disabled:opacity-60"
             >
               ¿Olvidaste tu contraseña?
             </button>
-
-
 
           </form>
         </div>
