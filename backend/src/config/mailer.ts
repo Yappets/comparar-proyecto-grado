@@ -1,35 +1,79 @@
 import dotenv from "dotenv";
 dotenv.config();
 
-import dns from "dns";
-import nodemailer from "nodemailer";
-import SMTPTransport from "nodemailer/lib/smtp-transport";
+import https from "https";
 
-// Fuerza a Node.js a priorizar IPv4.
-// En Render, Gmail a veces intenta salir por IPv6 y falla con ENETUNREACH.
-dns.setDefaultResultOrder("ipv4first");
-
-console.log("MAILER ACTIVO: SMTP Gmail puerto 587 IPv4");
-
-const smtpOptions: SMTPTransport.Options = {
-  host: "smtp.gmail.com",
-  port: 587,
-  secure: false,
-  requireTLS: true,
-
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-
-  tls: {
-    servername: "smtp.gmail.com",
-  },
-
-  connectionTimeout: 15000,
-  greetingTimeout: 15000,
-  socketTimeout: 15000,
+type SendMailOptions = {
+  from?: string;
+  to: string;
+  subject: string;
+  html: string;
 };
 
-// Transportador utilizado para enviar correos desde la cuenta configurada en el .env
-export const transporter = nodemailer.createTransport(smtpOptions);
+const RESEND_API_KEY = process.env.RESEND_API_KEY;
+
+const postResendEmail = (payload: object): Promise<any> => {
+  return new Promise((resolve, reject) => {
+    const data = JSON.stringify(payload);
+
+    const req = https.request(
+      {
+        hostname: "api.resend.com",
+        path: "/emails",
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${RESEND_API_KEY}`,
+          "Content-Type": "application/json",
+          "Content-Length": Buffer.byteLength(data),
+        },
+      },
+      (res) => {
+        let body = "";
+
+        res.on("data", (chunk) => {
+          body += chunk;
+        });
+
+        res.on("end", () => {
+          let parsedBody: any = null;
+
+          try {
+            parsedBody = body ? JSON.parse(body) : null;
+          } catch {
+            parsedBody = body;
+          }
+
+          if (res.statusCode && res.statusCode >= 200 && res.statusCode < 300) {
+            resolve(parsedBody);
+          } else {
+            reject({
+              statusCode: res.statusCode,
+              body: parsedBody,
+            });
+          }
+        });
+      }
+    );
+
+    req.on("error", reject);
+
+    req.write(data);
+    req.end();
+  });
+};
+
+// Mantiene la misma lógica anterior: transporter.sendMail(...)
+export const transporter = {
+  async sendMail(options: SendMailOptions) {
+    if (!RESEND_API_KEY) {
+      throw new Error("Falta configurar RESEND_API_KEY");
+    }
+
+    return postResendEmail({
+      from: options.from || "ComparAR <onboarding@resend.dev>",
+      to: [options.to],
+      subject: options.subject,
+      html: options.html,
+    });
+  },
+};
