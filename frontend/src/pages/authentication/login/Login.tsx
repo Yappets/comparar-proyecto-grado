@@ -19,8 +19,6 @@ const Login: React.FC = () => {
     setError(null);
 
     try {
-      
-
       const res = await fetch(`${API_URL}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -34,7 +32,12 @@ const Login: React.FC = () => {
         return;
       }
 
+      // Guarda el token en el contexto/autenticación.
       login(body.token);
+
+      // Guarda el email para poder mostrarlo después en el perfil.
+      localStorage.setItem("userEmail", email);
+
       navigate("/");
     } catch {
       setError("No se pudo conectar con el servidor");
