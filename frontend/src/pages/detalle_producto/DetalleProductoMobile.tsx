@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { useCart } from "../../Carrito/CartContext";
+import BottomNav from "../../components/BottomNav2";
 import { API_URL } from "../../config/api";
 
 /* ================= TIPOS ================= */
@@ -145,7 +146,7 @@ const DetalleProductoMobile = () => {
         <div className="flex items-start gap-3">
           <button
             onClick={() => navigate(-1)}
-            className="text-black mt-1"
+            className="!bg-transparent p-0 border-none shadow-none text-black mt-1"
           >
             <ArrowLeft size={24} />
           </button>
@@ -197,7 +198,7 @@ const DetalleProductoMobile = () => {
               />
             </div>
 
-            {/* LISTA */}
+            {/* LISTA + BOTÓN AGREGAR */}
             <div className="px-4 pb-32">
               <div className="bg-white rounded-3xl shadow-md p-4">
 
@@ -263,17 +264,20 @@ const DetalleProductoMobile = () => {
 
                 </div>
               </div>
+
+              {/* BOTÓN AGREGAR NO FIJO */}
+              <button
+                onClick={handleAgregar}
+                className="w-full mt-5 py-3 text-white font-semibold rounded-full !bg-red-600 hover:bg-[#2b1f1c]"
+              >
+                Agregar
+              </button>
             </div>
           </div>
 
-          {/* FOOTER */}
-          <div className="fixed bottom-0 left-0 w-full bg-white px-4 pb-6 pt-3 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] z-30">
-            <button
-              onClick={handleAgregar}
-              className="w-full py-3 text-white font-semibold rounded-full !bg-red-600 hover:bg-[#2b1f1c]"
-            >
-              Agregar
-            </button>
+          {/* ================= BOTTOM NAV ================= */}
+          <div className="fixed bottom-0 left-0 right-0 z-40">
+            <BottomNav />
           </div>
         </>
       )}
