@@ -58,25 +58,21 @@ const Home: React.FC = () => {
 
   /* ================= FETCH ================= */
 
- useEffect(() => {
-  setLoadingProductos(true);
+  useEffect(() => {
+    setLoadingProductos(true);
 
-  const url = soloOfertas
-    ? `${API_URL}/api/productos?soloOfertas=true`
-    : `${API_URL}/api/productos`;
-
-  fetch(url)
-    .then((res) => res.json())
-    .then((data: ProductoApi[]) => {
-      setProductos(data);
-    })
-    .catch((err) =>
-      console.error("Error al cargar productos en Home:", err)
-    )
-    .finally(() => {
-      setLoadingProductos(false);
-    });
-}, [soloOfertas]);
+    fetch(`${API_URL}/api/productos`)
+      .then((res) => res.json())
+      .then((data: ProductoApi[]) => {
+        setProductos(data);
+      })
+      .catch((err) =>
+        console.error("Error al cargar productos en Home:", err)
+      )
+      .finally(() => {
+        setLoadingProductos(false);
+      });
+  }, []);
 
   /* ================= HANDLERS ================= */
 
@@ -127,20 +123,27 @@ const Home: React.FC = () => {
   /* ================= FILTRO ================= */
 
   const productosFiltrados = useMemo(() => {
-  const q = search.trim().toLowerCase();
+    const q = search.trim().toLowerCase();
 
-  if (q) {
-    return productos.filter((p) =>
-      p.titulo.toLowerCase().includes(q)
-    );
-  }
+    // 🔍 SI HAY BÚSQUEDA → IGNORA FILTRO
+    if (q) {
+      return productos.filter((p) =>
+        p.titulo.toLowerCase().includes(q)
+      );
+    }
 
-  return productos;
-}, [productos, search]);
+    // FILTRO DE OFERTAS
+    if (soloOfertas) {
+      return productos.filter((p) => p.promocion !== null);
+    }
+
+    // TODOS LOS PRODUCTOS
+    return productos;
+  }, [productos, search, soloOfertas]);
 
   useEffect(() => {
-  setPageDesktop(1);
-}, [search, soloOfertas]);
+    setPageDesktop(1);
+  }, [search]);
 
   /* ================= PAGINACIÓN DESKTOP ================= */
 
