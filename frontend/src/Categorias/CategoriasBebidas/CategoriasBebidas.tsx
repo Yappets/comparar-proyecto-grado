@@ -47,20 +47,26 @@ const CategoriasBebidas: React.FC = () => {
 
   /* ================= FILTRO (CLON HOME) ================= */
 
+  /* ================= FILTRO ================= */
+
   const productosFiltrados = useMemo(() => {
     const q = search.trim().toLowerCase();
 
+    let resultado = productos;
+
+    // Primero aplica el filtro de ofertas
+    if (soloOfertas) {
+      resultado = resultado.filter((p) => p.promocion !== null);
+    }
+
+    // Después aplica la búsqueda sobre lo ya filtrado
     if (q) {
-      return productos.filter((p) =>
+      resultado = resultado.filter((p) =>
         p.titulo.toLowerCase().includes(q)
       );
     }
 
-    if (soloOfertas) {
-      return productos.filter((p) => p.promocion !== null);
-    }
-
-    return productos;
+    return resultado;
   }, [productos, search, soloOfertas]);
 
   /* RESET PAGINA */

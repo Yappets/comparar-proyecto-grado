@@ -144,9 +144,15 @@ const CategoriasBebidasDesktop: React.FC<Props> = ({
               <div className="h-80 bg-gray-200 rounded-3xl"></div>
             </div>
           </div>
-        ) : productos.length === 0 ? (
+       ) : productos.length === 0 ? (
           <div className="text-center text-gray-500 py-16">
-            No se encontraron productos.
+            {search.trim()
+              ? soloOfertas
+                ? "No se encontraron ofertas para ese producto."
+                : "Producto no disponible."
+              : soloOfertas
+                ? "No hay ofertas disponibles."
+                : "No hay productos disponibles."}
           </div>
         ) : (
           <div className="grid grid-cols-3 gap-6">

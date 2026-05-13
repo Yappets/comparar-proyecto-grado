@@ -5,7 +5,7 @@ import ProductCard from "../../components/ProductCard";
 import Pagination from "../../components/Pagination";
 import ResumenCompra from "../../Carrito/ResumenCompra";
 import { useCart } from "../../Carrito/CartContext";
-import { Home } from "lucide-react";
+
 
 type ProductoApi = {
   titulo: string;
@@ -60,7 +60,7 @@ const CategoriasBebidasMobile: React.FC<Props> = ({
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Buscar..."
+          placeholder="Buscar productos..."
           className="flex-1 px-3 py-2 border rounded-full text-sm"
         />
 
@@ -140,7 +140,13 @@ const CategoriasBebidasMobile: React.FC<Props> = ({
           </div>
         ) : productos.length === 0 ? (
           <p className="text-center text-gray-500 py-10">
-            No se encontraron productos.
+            {search.trim()
+              ? soloOfertas
+                ? "No se encontraron ofertas para ese producto."
+                : "Producto no disponible."
+              : soloOfertas
+                ? "No hay ofertas disponibles."
+                : "No hay productos disponibles."}
           </p>
         ) : (
           <div className="grid grid-cols-1 gap-4">
