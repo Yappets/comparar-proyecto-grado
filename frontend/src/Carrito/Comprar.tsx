@@ -102,74 +102,70 @@ const Comprar: React.FC = () => {
 
   /* ================= FETCH DISPONIBILIDAD ================= */
 
-useEffect(() => {
-  const fetchDisponibilidad = async () => {
-    const requestId = ++requestIdRef.current;
+  useEffect(() => {
+    const fetchDisponibilidad = async () => {
+      const requestId = ++requestIdRef.current;
 
-    if (items.length === 0) {
-      setDisponibilidad([]);
-      setLoading(false);
-      return;
-    }
-
-    try {
-      setLoading(true);
-
-      const nombresUnicos = Array.from(
-        new Set(items.map((item) => item.nombre))
-      );
-
-      const res = await fetch(`${API_URL}/api/productos/detalles`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          nombres: nombresUnicos,
-        }),
-      });
-
-      if (!res.ok) {
-        throw new Error(`Error HTTP ${res.status}`);
-      }
-
-      const data = await res.json();
-
-      const resultados = items.map((item) => ({
-        nombre: item.nombre,
-        cantidad: item.cantidad,
-        opciones: Array.isArray(data[item.nombre]) ? data[item.nombre] : [],
-      }));
-
-      if (requestIdRef.current === requestId) {
-        setDisponibilidad(resultados);
-      }
-    } catch (error) {
-      console.error("Error cargando disponibilidad", error);
-
-      /*
-        IMPORTANTE:
-        Si falla el endpoint, igual cargamos una disponibilidad vacía
-        por cada producto del carrito. Así no queda cargando infinito.
-      */
-      const resultadosVacios = items.map((item) => ({
-        nombre: item.nombre,
-        cantidad: item.cantidad,
-        opciones: [],
-      }));
-
-      if (requestIdRef.current === requestId) {
-        setDisponibilidad(resultadosVacios);
-      }
-    } finally {
-      if (requestIdRef.current === requestId) {
+      if (items.length === 0) {
+        setDisponibilidad([]);
         setLoading(false);
+        return;
       }
-    }
-  };
 
-  fetchDisponibilidad();
-}, [carritoKey]);
+      try {
+        setLoading(true);
+
+        const resultados = await Promise.all(
+          items.map(async (item) => {
+            try {
+              const res = await fetch(
+                `${API_URL}/api/productos/detalle/${encodeURIComponent(
+                  item.nombre
+                )}`
+              );
+
+              if (!res.ok) {
+                throw new Error(`Error HTTP ${res.status}`);
+              }
+
+              const data = await res.json();
+
+              return {
+                nombre: item.nombre,
+                cantidad: item.cantidad,
+                opciones: Array.isArray(data) ? data : [],
+              };
+            } catch (error) {
+              console.error("Error cargando disponibilidad de:", item.nombre, error);
+
+              return {
+                nombre: item.nombre,
+                cantidad: item.cantidad,
+                opciones: [],
+              };
+            }
+          })
+        );
+
+        // Solo se actualiza si esta sigue siendo la última búsqueda activa.
+        if (requestIdRef.current === requestId) {
+          setDisponibilidad(resultados);
+        }
+      } catch (error) {
+        console.error("Error cargando disponibilidad", error);
+
+        if (requestIdRef.current === requestId) {
+          setDisponibilidad([]);
+        }
+      } finally {
+        if (requestIdRef.current === requestId) {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchDisponibilidad();
+  }, [carritoKey]);
 
   /* ================= VALIDAR SI LA DISPONIBILIDAD YA CORRESPONDE AL CARRITO ACTUAL ================= */
 

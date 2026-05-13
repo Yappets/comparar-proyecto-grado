@@ -17,6 +17,8 @@ const parsearPromocion = (texto: string | null) => {
 
   const limpio = texto.toLowerCase().trim();
 
+  // Detecta promociones del tipo "3x2", "2x1", etc.
+  // Se interpreta como N unidades totales, pagando M unidades.
   const matchNxM = limpio.match(/(\d+)\s*x\s*(\d+)/);
   if (matchNxM) {
     const n = parseInt(matchNxM[1]);
@@ -34,6 +36,7 @@ const parsearPromocion = (texto: string | null) => {
     }
   }
 
+  // Detecta promociones del tipo "2do al 50%".
   const matchSegundo = limpio.match(/2do.*?(\d+)%/);
   if (matchSegundo) {
     const descuento = parseInt(matchSegundo[1]);
@@ -48,6 +51,7 @@ const parsearPromocion = (texto: string | null) => {
     };
   }
 
+  // Detecta descuentos unitarios simples, por ejemplo "20%".
   const matchDescuento = limpio.match(/(\d+)%/);
   if (matchDescuento) {
     const descuento = parseInt(matchDescuento[1]);
@@ -68,6 +72,7 @@ const parsearPromocion = (texto: string | null) => {
 
 const formatear = (productos: any[]) => {
   return productos.map((p) => {
+    // Unifica precios provenientes de distintos supermercados o scrapers.
     const precioBase = parseFloat(
       (p.precio_base ?? p.precio_regular ?? "$0")
         .toString()
@@ -120,6 +125,8 @@ const marcaBaseEstaContenida = (
 
   const candidataPegada = candidata.join("");
 
+  // Permite comparar marcas escritas de forma distinta entre supermercados.
+  // Ejemplo: "Coca Cola" contra "CocaCola" o variantes similares.
   return base.every((b) =>
     candidata.some((c) => c.includes(b)) ||
     candidataPegada.includes(b)
@@ -140,6 +147,7 @@ const extraerVolumenMl = (texto: string): number | null => {
   let valor = parseFloat(match[1].replace(",", "."));
   const unidad = match[2];
 
+  // Convierte litros a mililitros para comparar productos equivalentes.
   if (unidad === "l" || unidad === "lt") {
     valor *= 1000;
   }
@@ -151,6 +159,7 @@ const volumenCompatible = (a: string, b: string, tolerancia = 100) => {
   const va = extraerVolumenMl(a);
   const vb = extraerVolumenMl(b);
 
+  // Si no se puede extraer volumen de alguno, no se descarta el producto.
   if (!va || !vb) return true;
 
   return Math.abs(va - vb) <= tolerancia;
@@ -208,6 +217,7 @@ const gasCompatible = (a: string, b: string) => {
   const ga = detectarGas(a);
   const gb = detectarGas(b);
 
+  // Si no se detecta gasificación en alguno, no se descarta el producto.
   if (!ga || !gb) return true;
 
   return ga === gb;
@@ -223,54 +233,8 @@ const similitud = (a: string, b: string) => {
 
   const comunes = pa.filter((p) => pb.includes(p));
 
+  // Calcula coincidencia entre títulos usando tokens comunes.
   return comunes.length / Math.max(pa.length, pb.length);
-};
-
-/* ======================================================
-   FUNCIÓN INTERNA PARA OBTENER DETALLE
-====================================================== */
-
-const obtenerDetalleDesdeProductos = (
-  todos: any[],
-  nombreDecodificado: string
-): any[] => {
-  const base = todos
-    .map((p) => ({
-      ...p,
-      score: similitud(p.titulo, nombreDecodificado),
-    }))
-    .sort((a, b) => b.score - a.score)[0];
-
-  if (!base) {
-    return [];
-  }
-
-  const candidatos = todos.filter((p) => {
-    const marcaBase = base.marca || base.titulo;
-    const marcaCand = p.marca || p.titulo;
-
-    if (!marcaBaseEstaContenida(marcaBase, marcaCand)) return false;
-    if (!volumenCompatible(base.titulo, p.titulo)) return false;
-    if (!gasCompatible(base.titulo, p.titulo)) return false;
-    if (!packCompatible(base.titulo, p.titulo)) return false;
-
-    return true;
-  });
-
-  const mejoresPorSuper = Object.values(
-    candidatos.reduce((acc: any, p) => {
-      const score = similitud(p.titulo, base.titulo);
-      const key = p.supermercado;
-
-      if (!acc[key] || acc[key].score < score) {
-        acc[key] = { ...p, score };
-      }
-
-      return acc;
-    }, {})
-  );
-
-  return mejoresPorSuper;
 };
 
 /* ======================================================
@@ -314,9 +278,44 @@ export const getProductoPorNombre = async (
 
     const todos = formatear(productos);
 
-    const mejoresPorSuper = obtenerDetalleDesdeProductos(
-      todos,
-      nombreDecodificado
+    // Se toma como producto base el más parecido al nombre consultado.
+    const base = todos
+      .map((p) => ({
+        ...p,
+        score: similitud(p.titulo, nombreDecodificado),
+      }))
+      .sort((a, b) => b.score - a.score)[0];
+
+    if (!base) {
+      res.status(200).json([]);
+      return;
+    }
+
+    // Filtra productos equivalentes usando marca, volumen, gasificación y pack.
+    const candidatos = todos.filter((p) => {
+      const marcaBase = base.marca || base.titulo;
+      const marcaCand = p.marca || p.titulo;
+
+      if (!marcaBaseEstaContenida(marcaBase, marcaCand)) return false;
+      if (!volumenCompatible(base.titulo, p.titulo)) return false;
+      if (!gasCompatible(base.titulo, p.titulo)) return false;
+      if (!packCompatible(base.titulo, p.titulo)) return false;
+
+      return true;
+    });
+
+    // Selecciona el mejor producto equivalente por cada supermercado.
+    const mejoresPorSuper = Object.values(
+      candidatos.reduce((acc: any, p) => {
+        const score = similitud(p.titulo, base.titulo);
+        const key = p.supermercado;
+
+        if (!acc[key] || acc[key].score < score) {
+          acc[key] = { ...p, score };
+        }
+
+        return acc;
+      }, {})
     );
 
     res.status(200).json(mejoresPorSuper);
@@ -324,54 +323,6 @@ export const getProductoPorNombre = async (
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Error al buscar producto" });
-    return;
-  }
-};
-
-/* ======================================================
-   GET DETALLES DE VARIOS PRODUCTOS
-====================================================== */
-
-export const getProductosPorNombres = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
-  try {
-    const { nombres } = req.body;
-
-    if (!Array.isArray(nombres)) {
-      res.status(400).json({
-        error: "Debe enviar un array de nombres",
-      });
-      return;
-    }
-
-    const productos = await Producto.find()
-      .select(CAMPOS_PRODUCTO)
-      .lean();
-
-    const todos = formatear(productos);
-
-    const resultado: Record<string, any[]> = {};
-
-    for (const nombreOriginal of nombres) {
-      const nombreTexto = String(nombreOriginal);
-
-      resultado[nombreTexto] = obtenerDetalleDesdeProductos(
-        todos,
-        nombreTexto
-      );
-    }
-
-    res.status(200).json(resultado);
-    return;
-  } catch (error) {
-    console.error("Error al buscar productos por nombres:", error);
-
-    res.status(500).json({
-      error: "Error al buscar productos por nombres",
-    });
-
     return;
   }
 };
@@ -394,6 +345,7 @@ export const getProductosAgrupados = async (
     const grupos: Record<string, any[]> = {};
 
     todos.forEach((p) => {
+      // Agrupa productos por título normalizado para evitar repetir productos similares en Home.
       const key = normalizar(p.titulo);
 
       if (!grupos[key]) {
@@ -403,6 +355,7 @@ export const getProductosAgrupados = async (
       grupos[key].push(p);
     });
 
+    // Devuelve un representante por grupo para simplificar la visualización inicial.
     const resultado = Object.values(grupos).map((grupo) => grupo[0]);
 
     res.status(200).json(resultado);
