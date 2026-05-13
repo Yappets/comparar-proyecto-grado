@@ -1,11 +1,9 @@
-import React, { useState } from "react";
+import React from "react";
 import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import ProductCard from "../../components/ProductCard";
 import Pagination from "../../components/Pagination";
-import ResumenCompra from "../../Carrito/ResumenCompra";
-import { useCart } from "../../Carrito/CartContext";
-
+import BottomNav from "../../components/BottomNav2";
 
 type ProductoApi = {
   titulo: string;
@@ -44,16 +42,16 @@ const CategoriasBebidasMobile: React.FC<Props> = ({
   loadingProductos,
 }) => {
   const navigate = useNavigate();
-  const { cartCount } = useCart();
-  const [isCartOpen, setIsCartOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-gray-50">
 
       {/* HEADER MOBILE */}
       <header className="bg-white border-b sticky top-0 z-20 px-4 py-3 flex items-center gap-3">
-
-        <button onClick={() => navigate(-1)}>
+        <button
+          onClick={() => navigate(-1)}
+          className="!bg-transparent p-0 border-none shadow-none text-black"
+        >
           <ArrowLeft size={20} />
         </button>
 
@@ -61,29 +59,12 @@ const CategoriasBebidasMobile: React.FC<Props> = ({
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Buscar productos..."
-          className="flex-1 px-3 py-2 border rounded-full text-sm"
+          className="flex-1 px-3 py-2 border rounded-full text-sm bg-white text-black"
         />
-
-       <button
-          onClick={() => navigate("/resumen")}
-          className="relative w-9 h-9 rounded-full !bg-red-600 flex items-center justify-center p-0 border-none shadow-md"
-        >
-          <img
-            src="/icons/icono_carrito.png"
-            alt="Carrito"
-            className="w-5 h-5 object-contain"
-          />
-
-          {cartCount > 0 && (
-            <span className="absolute -top-1 -right-1 bg-black text-white text-[10px] font-bold rounded-full min-w-[16px] h-4 px-1 flex items-center justify-center leading-none">
-              {cartCount}
-            </span>
-          )}
-        </button>
       </header>
 
       {/* CONTENIDO */}
-      <main className="px-4 py-4">
+      <main className="px-4 py-4 pb-24">
 
         {/* TITULO + FILTRO */}
         <div className="mb-4">
@@ -99,7 +80,6 @@ const CategoriasBebidasMobile: React.FC<Props> = ({
             </span>
 
             <div className="flex items-center gap-2">
-
               <span className="text-xs text-gray-700">
                 {soloOfertas ? "Ofertas" : "Todos"}
               </span>
@@ -120,7 +100,6 @@ const CategoriasBebidasMobile: React.FC<Props> = ({
                 {/* Círculo */}
                 <div className="absolute left-0.5 top-0.5 w-4 h-4 bg-white rounded-full shadow transition peer-checked:translate-x-5" />
               </label>
-
             </div>
           </div>
         </div>
@@ -177,22 +156,10 @@ const CategoriasBebidasMobile: React.FC<Props> = ({
         )}
       </main>
 
-      {/* DRAWER */}
-      {isCartOpen && (
-        <>
-          <div
-            className="fixed inset-0 bg-black/40 z-30"
-            onClick={() => setIsCartOpen(false)}
-          />
-
-          <div className="fixed bottom-0 left-0 w-full h-[80%] bg-white rounded-t-3xl z-40">
-            <ResumenCompra
-              isDrawer
-              onClose={() => setIsCartOpen(false)}
-            />
-          </div>
-        </>
-      )}
+      {/* ================= BOTTOM NAV ================= */}
+      <div className="fixed bottom-0 left-0 right-0 z-40">
+        <BottomNav />
+      </div>
     </div>
   );
 };
