@@ -103,7 +103,10 @@ const HomeDesktop: React.FC<Props> = ({
             )}
           </button>
 
-          <button onClick={onUserClick}>
+          <button
+            onClick={onUserClick}
+            className="!bg-transparent p-0 border-none shadow-none"
+          >
             <img
               src="/icons/icono_login.png"
               alt="Usuario"

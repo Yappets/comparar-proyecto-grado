@@ -57,7 +57,10 @@ const HomeMobile: React.FC<Props> = ({
             Compar<span className="text-[#EF3340]">AR</span>
           </div>
 
-          <button onClick={onUserClick} className="text-black">
+         <button
+            onClick={onUserClick}
+            className="!bg-transparent p-0 border-none shadow-none text-black"
+          >
             <img
               src="/icons/icono_login.png"
               alt="Usuario"
