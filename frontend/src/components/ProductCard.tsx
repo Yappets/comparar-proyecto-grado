@@ -79,9 +79,8 @@ const ProductCard: React.FC<ProductCardProps> = ({
     e.stopPropagation();
 
     console.log("AGREGANDO PRODUCTO:", {
-    titulo,
-  });
-
+      titulo,
+    });
 
     setSupermercadoSeleccionado(supermercado);
 
@@ -90,7 +89,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
       precioBase: precio_base,
       imagen,
       cantidad: 1,
-      promocion, // 👈 importante
+      promocion,
       link,
       supermercado,
     });
@@ -103,85 +102,84 @@ const ProductCard: React.FC<ProductCardProps> = ({
   };
 
   return (
-  <div
-    onClick={handleClick}
-    className="
-      bg-white rounded-3xl shadow-md 
-      flex flex-col 
-      p-5 
-      cursor-pointer
-      transition hover:shadow-xl
-      md:h-[440px]
-    "
-  >
-   {/* ================= BADGE ZONE ================= */}
-    <div className="h-[32px] mb-2 flex items-center justify-center">
-      {tienePromo && (
-        <div
-          className={`inline-flex items-center px-4 py-1 rounded-full text-white text-xs font-semibold ${getColor(
-            supermercado
-          )}`}
-        >
-          🔥 Ver promociones
-        </div>
-      )}
-    </div>
-
-    {/* ================= IMAGE ZONE ================= */}
-    <div className="h-[160px] flex items-center justify-center">
-      <img
-        src={imagen}
-        alt={titulo}
-        className="max-h-[150px] object-contain"
-      />
-    </div>
-
-    {/* ================= CONTENT ================= */}
-    <div className="flex flex-col flex-1 mt-3">
-
-      {/* ===== TITULO (altura fija) ===== */}
-      <div className="h-[64px]">
-        <p className="text-lg font-medium text-gray-800 text-center line-clamp-2">
-          {titulo}
-        </p>
-      </div>
-
-      {/* ===== PRECIO (altura fija) ===== */}
-      <div className="h-[60px] flex flex-col justify-center text-center">
-        {!tienePromo && (
-          <p className="text-sm text-gray-400">
-            ${precio_base.toFixed(2)}
-          </p>
+    <div
+      onClick={handleClick}
+      className="
+        bg-white rounded-3xl shadow-md 
+        flex flex-col 
+        p-5 
+        cursor-pointer
+        transition hover:shadow-xl
+        md:h-[440px]
+      "
+    >
+      {/* ================= BADGE ZONE ================= */}
+      <div className="h-[32px] mb-2 flex items-center justify-center">
+        {tienePromo && (
+          <div
+            className={`inline-flex items-center px-4 py-1 rounded-full text-white text-xs font-semibold ${getColor(
+              supermercado
+            )}`}
+          >
+            🔥 Ver promociones
+          </div>
         )}
-
-        <p className="text-sm text-gray-500">Desde</p>
-        <p className="text-lg font-semibold text-gray-800">
-          ${precioFinal.toFixed(2)}
-        </p>
       </div>
 
-      {/* ===== BOTÓN ===== */}
-      <div className="mt-auto pt-4 flex justify-center">
-        <button
-          onClick={handleAgregar}
-          className="
-            px-6 py-2 
-            text-white text-sm font-semibold 
-            rounded-full shadow-md
-            !bg-red-600 hover:bg-[#2b1f1c]
-            transition
-          "
-        >
-          Agregar
-        </button>
+      {/* ================= IMAGE ZONE ================= */}
+      <div className="h-[160px] flex items-center justify-center">
+        <img
+          src={imagen}
+          alt={titulo}
+          loading="lazy"
+          decoding="async"
+          className="max-h-[150px] object-contain"
+        />
       </div>
 
+      {/* ================= CONTENT ================= */}
+      <div className="flex flex-col flex-1 mt-3">
+
+        {/* ===== TITULO (altura fija) ===== */}
+        <div className="h-[64px]">
+          <p className="text-lg font-medium text-gray-800 text-center line-clamp-2">
+            {titulo}
+          </p>
+        </div>
+
+        {/* ===== PRECIO (altura fija) ===== */}
+        <div className="h-[60px] flex flex-col justify-center text-center">
+          {!tienePromo && (
+            <p className="text-sm text-gray-400">
+              ${precio_base.toFixed(2)}
+            </p>
+          )}
+
+          <p className="text-sm text-gray-500">Desde</p>
+          <p className="text-lg font-semibold text-gray-800">
+            ${precioFinal.toFixed(2)}
+          </p>
+        </div>
+
+        {/* ===== BOTÓN ===== */}
+        <div className="mt-auto pt-4 flex justify-center">
+          <button
+            onClick={handleAgregar}
+            className="
+              px-6 py-2 
+              text-white text-sm font-semibold 
+              rounded-full shadow-md
+              !bg-red-600 hover:bg-[#2b1f1c]
+              transition
+            "
+          >
+            Agregar
+          </button>
+        </div>
+
+      </div>
     </div>
-  </div>
-);
+  );
 };
-
-
-
 
 export default ProductCard;
