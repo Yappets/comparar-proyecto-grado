@@ -232,14 +232,43 @@ const similitud = (a: string, b: string) => {
    GET TODOS
 ====================================================== */
 
-export const getProductos = async (_req: Request, res: Response): Promise<void> => {
+/* ======================================================
+   GET TODOS / SOLO OFERTAS
+====================================================== */
+
+export const getProductos = async (req: Request, res: Response): Promise<void> => {
   try {
-    const productos = await Producto.find();
+    const soloOfertas = req.query.soloOfertas === "true";
+
+    const campos =
+      "titulo precio_base precio_regular oferta_texto imagen supermercado link marca";
+
+    let filtro: any = {};
+
+    if (soloOfertas) {
+      filtro = {
+        oferta_texto: {
+          $exists: true,
+          $ne: null,
+          $not: /^\s*(no disponible)?\s*$/i,
+        },
+      };
+    }
+
+    const productos = await Producto.find(filtro)
+      .select(campos)
+      .lean();
+
     const todos = formatear(productos);
 
-    res.status(200).json(todos);
+    const resultado = soloOfertas
+      ? todos.filter((p) => p.promocion !== null)
+      : todos;
+
+    res.status(200).json(resultado);
     return;
   } catch (error) {
+    console.error("Error al obtener productos:", error);
     res.status(500).json({ error: "Error al obtener productos" });
     return;
   }
