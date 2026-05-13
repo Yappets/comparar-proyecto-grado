@@ -102,20 +102,20 @@ const Comprar: React.FC = () => {
 
   /* ================= FETCH DISPONIBILIDAD ================= */
 
-  useEffect(() => {
-    const fetchDisponibilidad = async () => {
-      const requestId = ++requestIdRef.current;
+useEffect(() => {
+  const fetchDisponibilidad = async () => {
+    const requestId = ++requestIdRef.current;
 
-      if (items.length === 0) {
-        setDisponibilidad([]);
-        setLoading(false);
-        return;
-      }
+    if (items.length === 0) {
+      setDisponibilidad([]);
+      setLoading(false);
+      return;
+    }
 
-      try {
-        setLoading(true);
+    try {
+      setLoading(true);
 
-       const nombresUnicos = Array.from(
+      const nombresUnicos = Array.from(
         new Set(items.map((item) => item.nombre))
       );
 
@@ -141,25 +141,35 @@ const Comprar: React.FC = () => {
         opciones: Array.isArray(data[item.nombre]) ? data[item.nombre] : [],
       }));
 
-        // Solo se actualiza si esta sigue siendo la última búsqueda activa.
-        if (requestIdRef.current === requestId) {
-          setDisponibilidad(resultados);
-        }
-      } catch (error) {
-        console.error("Error cargando disponibilidad", error);
-
-        if (requestIdRef.current === requestId) {
-          setDisponibilidad([]);
-        }
-      } finally {
-        if (requestIdRef.current === requestId) {
-          setLoading(false);
-        }
+      if (requestIdRef.current === requestId) {
+        setDisponibilidad(resultados);
       }
-    };
+    } catch (error) {
+      console.error("Error cargando disponibilidad", error);
 
-    fetchDisponibilidad();
-  }, [carritoKey]);
+      /*
+        IMPORTANTE:
+        Si falla el endpoint, igual cargamos una disponibilidad vacía
+        por cada producto del carrito. Así no queda cargando infinito.
+      */
+      const resultadosVacios = items.map((item) => ({
+        nombre: item.nombre,
+        cantidad: item.cantidad,
+        opciones: [],
+      }));
+
+      if (requestIdRef.current === requestId) {
+        setDisponibilidad(resultadosVacios);
+      }
+    } finally {
+      if (requestIdRef.current === requestId) {
+        setLoading(false);
+      }
+    }
+  };
+
+  fetchDisponibilidad();
+}, [carritoKey]);
 
   /* ================= VALIDAR SI LA DISPONIBILIDAD YA CORRESPONDE AL CARRITO ACTUAL ================= */
 
