@@ -1,6 +1,7 @@
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
+import compression from "compression";
 
 import productoRoutes from "./routes/producto.routes";
 import authRoutes from "./routes/auth.routes";
@@ -48,6 +49,13 @@ app.options(
 );
 
 app.use(express.json());
+
+/* ======================================================
+   COMPRESIÓN DE RESPUESTAS
+====================================================== */
+
+// Comprime respuestas JSON para reducir el tamaño transferido al frontend.
+app.use(compression());
 
 // Ruta base para verificar rápidamente que la API está activa.
 app.get("/", (_req, res) => {
