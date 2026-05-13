@@ -245,9 +245,6 @@ const handleAddressClickWithAuth = () => {
             Comprar en supermercado
           </button>
 
-          <p className="text-center text-sm text-black mt-2">
-            Te redirigiremos al supermercado con tu carrito listo
-          </p>
         </div>
 
       </div>
