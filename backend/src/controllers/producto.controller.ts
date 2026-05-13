@@ -95,45 +95,6 @@ const formatear = (productos: any[]) => {
 };
 
 /* ======================================================
-   CACHE SIMPLE EN MEMORIA
-====================================================== */
-
-const CACHE_MS = 1000 * 60 * 3; // 3 minutos
-
-let productosFormateadosCache: any[] | null = null;
-let productosFormateadosCacheExpira = 0;
-
-const detalleProductoCache = new Map<
-  string,
-  {
-    expira: number;
-    data: any[];
-  }
->();
-
-const obtenerProductosFormateados = async () => {
-  const ahora = Date.now();
-
-  if (
-    productosFormateadosCache &&
-    productosFormateadosCacheExpira > ahora
-  ) {
-    return productosFormateadosCache;
-  }
-
-  const productos = await Producto.find()
-    .select(CAMPOS_PRODUCTO)
-    .lean();
-
-  const todos = formatear(productos);
-
-  productosFormateadosCache = todos;
-  productosFormateadosCacheExpira = ahora + CACHE_MS;
-
-  return todos;
-};
-
-/* ======================================================
    FUNCIONES DE NORMALIZACIÓN Y MATCH
 ====================================================== */
 
@@ -285,12 +246,15 @@ export const getProductos = async (
   res: Response
 ): Promise<void> => {
   try {
-    const todos = await obtenerProductosFormateados();
+    const productos = await Producto.find()
+      .select(CAMPOS_PRODUCTO)
+      .lean();
+
+    const todos = formatear(productos);
 
     res.status(200).json(todos);
     return;
   } catch (error) {
-    console.error("Error al obtener productos:", error);
     res.status(500).json({ error: "Error al obtener productos" });
     return;
   }
@@ -308,17 +272,11 @@ export const getProductoPorNombre = async (
     const nombre = req.params.nombre;
     const nombreDecodificado = decodeURIComponent(nombre);
 
-    const cacheKey = normalizar(nombreDecodificado);
-    const ahora = Date.now();
+    const productos = await Producto.find()
+      .select(CAMPOS_PRODUCTO)
+      .lean();
 
-    const detalleCacheado = detalleProductoCache.get(cacheKey);
-
-    if (detalleCacheado && detalleCacheado.expira > ahora) {
-      res.status(200).json(detalleCacheado.data);
-      return;
-    }
-
-    const todos = await obtenerProductosFormateados();
+    const todos = formatear(productos);
 
     // Se toma como producto base el más parecido al nombre consultado.
     const base = todos
@@ -358,12 +316,7 @@ export const getProductoPorNombre = async (
 
         return acc;
       }, {})
-    ) as any[];
-
-    detalleProductoCache.set(cacheKey, {
-      data: mejoresPorSuper,
-      expira: ahora + CACHE_MS,
-    });
+    );
 
     res.status(200).json(mejoresPorSuper);
     return;
@@ -383,7 +336,11 @@ export const getProductosAgrupados = async (
   res: Response
 ) => {
   try {
-    const todos = await obtenerProductosFormateados();
+    const productos = await Producto.find()
+      .select(CAMPOS_PRODUCTO)
+      .lean();
+
+    const todos = formatear(productos);
 
     const grupos: Record<string, any[]> = {};
 
@@ -403,7 +360,6 @@ export const getProductosAgrupados = async (
 
     res.status(200).json(resultado);
   } catch (error) {
-    console.error("Error al obtener productos agrupados:", error);
     res.status(500).json({ error: "Error al obtener productos agrupados" });
   }
 };
