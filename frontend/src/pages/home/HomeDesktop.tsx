@@ -219,7 +219,13 @@ const HomeDesktop: React.FC<Props> = ({
               </div>
             ) : productos.length === 0 ? (
               <div className="text-center text-gray-500 py-16">
-                No se encontraron productos.
+                {search.trim()
+                  ? soloOfertas
+                    ? "No se encontraron ofertas para ese producto."
+                    : "Producto no disponible."
+                  : soloOfertas
+                    ? "No hay ofertas disponibles."
+                    : "No hay productos disponibles."}
               </div>
             ) : (
               <div className="grid grid-cols-2 lg:grid-cols-3 gap-6">

@@ -177,7 +177,13 @@ const HomeMobile: React.FC<Props> = ({
           </>
         ) : productos.length === 0 ? (
           <p className="text-center text-gray-500">
-            No se encontraron productos.
+            {search.trim()
+              ? soloOfertas
+                ? "No se encontraron ofertas para ese producto."
+                : "Producto no disponible."
+              : soloOfertas
+                ? "No hay ofertas disponibles."
+                : "No hay productos disponibles."}
           </p>
         ) : (
           productos.map((prod, i) => (

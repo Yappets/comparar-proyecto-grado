@@ -122,28 +122,31 @@ const Home: React.FC = () => {
 
   /* ================= FILTRO ================= */
 
+  /* ================= FILTRO ================= */
+
   const productosFiltrados = useMemo(() => {
     const q = search.trim().toLowerCase();
 
-    // 🔍 SI HAY BÚSQUEDA → IGNORA FILTRO
+    let resultado = productos;
+
+    // Primero aplica el filtro de ofertas
+    if (soloOfertas) {
+      resultado = resultado.filter((p) => p.promocion !== null);
+    }
+
+    // Después aplica la búsqueda sobre lo ya filtrado
     if (q) {
-      return productos.filter((p) =>
+      resultado = resultado.filter((p) =>
         p.titulo.toLowerCase().includes(q)
       );
     }
 
-    // FILTRO DE OFERTAS
-    if (soloOfertas) {
-      return productos.filter((p) => p.promocion !== null);
-    }
-
-    // TODOS LOS PRODUCTOS
-    return productos;
+    return resultado;
   }, [productos, search, soloOfertas]);
 
   useEffect(() => {
     setPageDesktop(1);
-  }, [search]);
+  }, [search, soloOfertas]);
 
   /* ================= PAGINACIÓN DESKTOP ================= */
 
