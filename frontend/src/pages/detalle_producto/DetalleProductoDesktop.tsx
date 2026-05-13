@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { useCart } from "../../Carrito/CartContext";
+import ResumenCompra from "../../Carrito/ResumenCompra";
 import { API_URL } from "../../config/api";
 
 /* ================= TIPOS ================= */
@@ -62,12 +63,18 @@ const calcularPrecioUnitario = (
 /* ================= COMPONENTE ================= */
 
 const DetalleProductoDesktop = () => {
-  const { addToCart, setSupermercadoSeleccionado } = useCart();
+  const {
+    addToCart,
+    setSupermercadoSeleccionado,
+    cartCount,
+  } = useCart();
+
   const navigate = useNavigate();
   const { nombre } = useParams<{ nombre: string }>();
 
   const [productos, setProductos] = useState<Producto[]>([]);
   const [loadingProducto, setLoadingProducto] = useState(true);
+  const [isCartOpen, setIsCartOpen] = useState(false);
 
   /* ================= FETCH ================= */
 
@@ -138,18 +145,44 @@ const DetalleProductoDesktop = () => {
   /* ================= RENDER ================= */
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 relative">
 
       {/* HEADER */}
-      <div className="bg-white shadow-sm px-6 py-4 flex items-center gap-3">
-        <button onClick={() => navigate(-1)}>
-          <ArrowLeft size={24} />
-        </button>
+      <header className="bg-white border-b sticky top-0 z-20">
+        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
 
-        <h1 className="text-xl font-semibold">
-          {loadingProducto ? "Cargando producto..." : titulo}
-        </h1>
-      </div>
+          <div className="flex items-center gap-3 min-w-0">
+            <button
+              onClick={() => navigate(-1)}
+              className="!bg-transparent p-0 border-none shadow-none text-black"
+            >
+              <ArrowLeft size={24} />
+            </button>
+
+            <h1 className="text-xl font-semibold truncate">
+              {loadingProducto ? "Cargando producto..." : titulo}
+            </h1>
+          </div>
+
+          <button
+            onClick={() => setIsCartOpen(true)}
+            className="relative w-14 h-14 rounded-full !bg-red-600 hover:bg-[#d82b37] flex items-center justify-center shadow-md transition shrink-0"
+          >
+            <img
+              src="/icons/icono_carrito.png"
+              alt="Carrito"
+              className="h-7 w-auto object-contain"
+            />
+
+            {cartCount > 0 && (
+              <span className="absolute -top-1 -right-1 !bg-blue-600 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                {cartCount}
+              </span>
+            )}
+          </button>
+
+        </div>
+      </header>
 
       {/* CARGANDO */}
       {loadingProducto ? (
@@ -181,7 +214,7 @@ const DetalleProductoDesktop = () => {
       ) : (
         <>
           {/* CONTENIDO */}
-          <div className="max-w-5xl mx-auto p-6">
+          <div className="max-w-5xl mx-auto p-6 pb-28">
 
             {/* IMAGEN */}
             <div className="flex justify-center mb-6">
@@ -254,11 +287,11 @@ const DetalleProductoDesktop = () => {
           </div>
 
           {/* FOOTER */}
-          <div className="fixed bottom-0 left-0 w-full bg-white p-4 shadow-lg">
+          <div className="fixed bottom-0 left-0 w-full bg-white p-4 shadow-lg z-20">
             <div className="max-w-5xl mx-auto flex justify-center">
               <button
                 onClick={handleAgregar}
-                className="!bg-red-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-[#2b1f1c]"
+                className="!bg-red-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-[#d82b37]"
               >
                 Agregar
               </button>
@@ -266,6 +299,27 @@ const DetalleProductoDesktop = () => {
           </div>
         </>
       )}
+
+      {/* DRAWER */}
+      <>
+        {isCartOpen && (
+          <div
+            className="fixed inset-0 bg-black/40 z-30"
+            onClick={() => setIsCartOpen(false)}
+          />
+        )}
+
+        <div
+          className={`fixed top-0 right-0 h-full w-[480px] bg-white shadow-2xl z-40 transform transition-transform duration-300 ${
+            isCartOpen ? "translate-x-0" : "translate-x-full"
+          }`}
+        >
+          <ResumenCompra
+            isDrawer
+            onClose={() => setIsCartOpen(false)}
+          />
+        </div>
+      </>
     </div>
   );
 };
