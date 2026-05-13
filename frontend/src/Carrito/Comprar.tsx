@@ -115,37 +115,31 @@ const Comprar: React.FC = () => {
       try {
         setLoading(true);
 
-        const resultados = await Promise.all(
-          items.map(async (item) => {
-            try {
-              const res = await fetch(
-                `${API_URL}/api/productos/detalle/${encodeURIComponent(
-                  item.nombre
-                )}`
-              );
+       const nombresUnicos = Array.from(
+        new Set(items.map((item) => item.nombre))
+      );
 
-              if (!res.ok) {
-                throw new Error(`Error HTTP ${res.status}`);
-              }
+      const res = await fetch(`${API_URL}/api/productos/detalles`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          nombres: nombresUnicos,
+        }),
+      });
 
-              const data = await res.json();
+      if (!res.ok) {
+        throw new Error(`Error HTTP ${res.status}`);
+      }
 
-              return {
-                nombre: item.nombre,
-                cantidad: item.cantidad,
-                opciones: Array.isArray(data) ? data : [],
-              };
-            } catch (error) {
-              console.error("Error cargando disponibilidad de:", item.nombre, error);
+      const data = await res.json();
 
-              return {
-                nombre: item.nombre,
-                cantidad: item.cantidad,
-                opciones: [],
-              };
-            }
-          })
-        );
+      const resultados = items.map((item) => ({
+        nombre: item.nombre,
+        cantidad: item.cantidad,
+        opciones: Array.isArray(data[item.nombre]) ? data[item.nombre] : [],
+      }));
 
         // Solo se actualiza si esta sigue siendo la última búsqueda activa.
         if (requestIdRef.current === requestId) {
