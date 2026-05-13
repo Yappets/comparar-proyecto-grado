@@ -2,6 +2,13 @@ import { Request, Response } from "express";
 import Producto from "../models/Producto";
 
 /* ======================================================
+   CAMPOS NECESARIOS PARA OPTIMIZAR CONSULTAS
+====================================================== */
+
+const CAMPOS_PRODUCTO =
+  "titulo precio_base precio_regular oferta_texto imagen supermercado link marca";
+
+/* ======================================================
    PARSEADOR GENERAL DE PROMOCIONES
 ====================================================== */
 
@@ -23,8 +30,8 @@ const parsearPromocion = (texto: string | null) => {
         cantidadBloque: n,
         estructura: [
           { unidades: m, descuento: 0 },
-          { unidades: n - m, descuento: 100 }
-        ]
+          { unidades: n - m, descuento: 100 },
+        ],
       };
     }
   }
@@ -39,8 +46,8 @@ const parsearPromocion = (texto: string | null) => {
       cantidadBloque: 2,
       estructura: [
         { unidades: 1, descuento: 0 },
-        { unidades: 1, descuento }
-      ]
+        { unidades: 1, descuento },
+      ],
     };
   }
 
@@ -52,7 +59,7 @@ const parsearPromocion = (texto: string | null) => {
     return {
       tipo: "DESCUENTO_UNITARIO",
       cantidadBloque: 1,
-      estructura: [{ unidades: 1, descuento }]
+      estructura: [{ unidades: 1, descuento }],
     };
   }
 
@@ -82,7 +89,7 @@ const formatear = (productos: any[]) => {
       imagen: p.imagen,
       supermercado: p.supermercado || "Desconocido",
       link: p.link,
-      marca: p.marca
+      marca: p.marca,
     };
   });
 };
@@ -193,13 +200,15 @@ const detectarGas = (texto: string): "con" | "sin" | null => {
     t.includes("sin gas") ||
     t.includes("no gasificada") ||
     t.includes("still")
-  ) return "sin";
+  )
+    return "sin";
 
   if (
     t.includes("con gas") ||
     t.includes("gasificada") ||
     t.includes("sparkling")
-  ) return "con";
+  )
+    return "con";
 
   return null;
 };
@@ -232,9 +241,15 @@ const similitud = (a: string, b: string) => {
    GET TODOS
 ====================================================== */
 
-export const getProductos = async (_req: Request, res: Response): Promise<void> => {
+export const getProductos = async (
+  _req: Request,
+  res: Response
+): Promise<void> => {
   try {
-    const productos = await Producto.find();
+    const productos = await Producto.find()
+      .select(CAMPOS_PRODUCTO)
+      .lean();
+
     const todos = formatear(productos);
 
     res.status(200).json(todos);
@@ -257,7 +272,10 @@ export const getProductoPorNombre = async (
     const nombre = req.params.nombre;
     const nombreDecodificado = decodeURIComponent(nombre);
 
-    const productos = await Producto.find();
+    const productos = await Producto.find()
+      .select(CAMPOS_PRODUCTO)
+      .lean();
+
     const todos = formatear(productos);
 
     // Se toma como producto base el más parecido al nombre consultado.
@@ -302,7 +320,6 @@ export const getProductoPorNombre = async (
 
     res.status(200).json(mejoresPorSuper);
     return;
-
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Error al buscar producto" });
@@ -310,9 +327,19 @@ export const getProductoPorNombre = async (
   }
 };
 
-export const getProductosAgrupados = async (_req: Request, res: Response) => {
+/* ======================================================
+   GET PRODUCTOS AGRUPADOS
+====================================================== */
+
+export const getProductosAgrupados = async (
+  _req: Request,
+  res: Response
+) => {
   try {
-    const productos = await Producto.find();
+    const productos = await Producto.find()
+      .select(CAMPOS_PRODUCTO)
+      .lean();
+
     const todos = formatear(productos);
 
     const grupos: Record<string, any[]> = {};
@@ -332,7 +359,6 @@ export const getProductosAgrupados = async (_req: Request, res: Response) => {
     const resultado = Object.values(grupos).map((grupo) => grupo[0]);
 
     res.status(200).json(resultado);
-
   } catch (error) {
     res.status(500).json({ error: "Error al obtener productos agrupados" });
   }
