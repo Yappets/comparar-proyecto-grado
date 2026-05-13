@@ -64,18 +64,18 @@ const CategoriasBebidasMobile: React.FC<Props> = ({
           className="flex-1 px-3 py-2 border rounded-full text-sm"
         />
 
-        <button
+       <button
           onClick={() => navigate("/resumen")}
-          className="relative flex items-center justify-center !bg-red-600"
+          className="relative w-9 h-9 rounded-full !bg-red-600 flex items-center justify-center p-0 border-none shadow-md"
         >
           <img
             src="/icons/icono_carrito.png"
             alt="Carrito"
-            className="w-6 h-6 object-contain"
+            className="w-5 h-5 object-contain"
           />
 
           {cartCount > 0 && (
-            <span className="absolute -top-1 -right-2 bg-black text-white text-[10px] px-1 rounded-full">
+            <span className="absolute -top-1 -right-1 bg-black text-white text-[10px] font-bold rounded-full min-w-[16px] h-4 px-1 flex items-center justify-center leading-none">
               {cartCount}
             </span>
           )}
@@ -95,13 +95,13 @@ const CategoriasBebidasMobile: React.FC<Props> = ({
             <span className="text-xs text-gray-600">
               {loadingProductos
                 ? "Cargando..."
-                : `${totalProducts} productos`}
+                : `${totalProducts} ${soloOfertas ? "ofertas" : "productos"}`}
             </span>
 
             <div className="flex items-center gap-2">
 
               <span className="text-xs text-gray-700">
-                Ofertas
+                {soloOfertas ? "Ofertas" : "Todos"}
               </span>
 
               <label className="relative inline-flex items-center cursor-pointer">
