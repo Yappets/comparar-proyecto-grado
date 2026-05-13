@@ -184,6 +184,9 @@ const Home: React.FC = () => {
           search={search}
           setSearch={setSearch}
           productos={productosFiltrados}
+          totalProducts={productosFiltrados.length}
+          soloOfertas={soloOfertas}
+          setSoloOfertas={setSoloOfertas}
           loadingProductos={loadingProductos}
         />
       </div>

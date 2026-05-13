@@ -23,6 +23,9 @@ type Props = {
   search: string;
   setSearch: (v: string) => void;
   productos: ProductoAPI[];
+  totalProducts: number;
+  soloOfertas: boolean;
+  setSoloOfertas: React.Dispatch<React.SetStateAction<boolean>>;
   loadingProductos: boolean;
 };
 
@@ -34,6 +37,9 @@ const HomeMobile: React.FC<Props> = ({
   search,
   setSearch,
   productos,
+  totalProducts,
+  soloOfertas,
+  setSoloOfertas,
   loadingProductos,
 }) => {
   const navigate = useNavigate();
@@ -57,7 +63,7 @@ const HomeMobile: React.FC<Props> = ({
             Compar<span className="text-[#EF3340]">AR</span>
           </div>
 
-         <button
+          <button
             onClick={onUserClick}
             className="!bg-transparent p-0 border-none shadow-none text-black"
           >
@@ -86,7 +92,7 @@ const HomeMobile: React.FC<Props> = ({
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Buscar productos..."
-            className="w-full p-3 border border-gray-300 rounded-full"
+            className="w-full p-3 border border-gray-300 rounded-full bg-white text-black"
           />
         </div>
 
@@ -118,6 +124,45 @@ const HomeMobile: React.FC<Props> = ({
 
       {/* ================= PRODUCTOS ================= */}
       <div className="pt-[320px] pb-16 px-6 mb-6 space-y-4">
+
+        {/* TITULO + FILTRO */}
+        <div className="mb-4">
+          <h2 className="text-sm font-semibold text-black text-center">
+            {soloOfertas ? "Ofertas destacadas" : "Todos los productos"}
+          </h2>
+
+          <div className="flex justify-between items-center mt-2">
+            <span className="text-xs text-gray-600">
+              {loadingProductos
+                ? "Cargando..."
+                : `${totalProducts} ${soloOfertas ? "ofertas" : "productos"}`}
+            </span>
+
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-gray-700">
+                {soloOfertas ? "Ofertas" : "Todos"}
+              </span>
+
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={soloOfertas}
+                  onChange={() =>
+                    setSoloOfertas((prev) => !prev)
+                  }
+                  className="sr-only peer"
+                />
+
+                {/* Fondo */}
+                <div className="w-10 h-5 bg-gray-400 rounded-full peer-checked:bg-gray-500 transition" />
+
+                {/* Círculo */}
+                <div className="absolute left-0.5 top-0.5 w-4 h-4 bg-white rounded-full shadow transition peer-checked:translate-x-5" />
+              </label>
+            </div>
+          </div>
+        </div>
+
         {loadingProductos ? (
           <>
             <p className="text-center text-gray-500">
