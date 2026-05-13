@@ -1,5 +1,4 @@
 import React, { useEffect, useState, useContext, useMemo, useRef } from "react";
-import { useNavigate } from "react-router-dom";
 import { useCart } from "./CartContext";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { AddressContext } from "../context/AddressContext";
@@ -18,6 +17,10 @@ type ProductoDetalle = {
   promocion: any | null;
   link: string;
 };
+
+/* ================= CACHE LOCAL DE DETALLES ================= */
+
+const detalleProductoCache: Record<string, ProductoDetalle[]> = {};
 
 const getEstadoPromocion = (item: any, producto: any) => {
   if (!producto?.promocion) return null;
@@ -80,8 +83,6 @@ const Comprar: React.FC = () => {
     setTotalSeleccionado,
   } = useCart();
 
-  const navigate = useNavigate();
-
   const [loading, setLoading] = useState(true);
   const [disponibilidad, setDisponibilidad] = useState<any[]>([]);
   const [expandido, setExpandido] = useState<Record<string, boolean>>({});
@@ -115,12 +116,21 @@ const Comprar: React.FC = () => {
       try {
         setLoading(true);
 
-        const resultados = await Promise.all(
-          items.map(async (item) => {
+        const nombresUnicos = Array.from(
+          new Set(items.map((item) => item.nombre))
+        );
+
+        await Promise.all(
+          nombresUnicos.map(async (nombre) => {
+            // Si ya se consultó ese producto, no vuelve a pedirlo al backend.
+            if (detalleProductoCache[nombre]) {
+              return;
+            }
+
             try {
               const res = await fetch(
                 `${API_URL}/api/productos/detalle/${encodeURIComponent(
-                  item.nombre
+                  nombre
                 )}`
               );
 
@@ -130,22 +140,20 @@ const Comprar: React.FC = () => {
 
               const data = await res.json();
 
-              return {
-                nombre: item.nombre,
-                cantidad: item.cantidad,
-                opciones: Array.isArray(data) ? data : [],
-              };
+              detalleProductoCache[nombre] = Array.isArray(data)
+                ? data
+                : [];
             } catch (error) {
-              console.error("Error cargando disponibilidad de:", item.nombre, error);
-
-              return {
-                nombre: item.nombre,
-                cantidad: item.cantidad,
-                opciones: [],
-              };
+              console.error("Error cargando disponibilidad de:", nombre, error);
             }
           })
         );
+
+        const resultados = items.map((item) => ({
+          nombre: item.nombre,
+          cantidad: item.cantidad,
+          opciones: detalleProductoCache[item.nombre] ?? [],
+        }));
 
         // Solo se actualiza si esta sigue siendo la última búsqueda activa.
         if (requestIdRef.current === requestId) {
@@ -154,8 +162,14 @@ const Comprar: React.FC = () => {
       } catch (error) {
         console.error("Error cargando disponibilidad", error);
 
+        const resultadosVacios = items.map((item) => ({
+          nombre: item.nombre,
+          cantidad: item.cantidad,
+          opciones: [],
+        }));
+
         if (requestIdRef.current === requestId) {
-          setDisponibilidad([]);
+          setDisponibilidad(resultadosVacios);
         }
       } finally {
         if (requestIdRef.current === requestId) {
